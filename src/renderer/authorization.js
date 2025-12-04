@@ -7,6 +7,9 @@ const authorizationEndpoint = "https://accounts.spotify.com/authorize";
 const tokenEndpoint = "https://accounts.spotify.com/api/token";
 const scope = 'user-read-playback-state user-modify-playback-state user-read-currently-playing streaming';
 
+const TOKEN_CHECK = 30_000;           // Check token expiry every 30s
+const TOKEN_MIN_TIME_LEFT = 12000000;  // Refresh token if current token expires in less than 2 minutes
+
 // Data structure that manages the current active token, caching it in localStorage
 const currentToken = {
   save: function (response) {
@@ -83,8 +86,8 @@ const getToken = async code => {
   currentToken.save(await response.json());
 }
 
-// Get refresh token once the current access token expires
-const getRefreshToken = async () => {
+// Refresh token once the current access token expires
+const refreshToken = async () => {
   const refreshToken = currentToken.refresh_token;
 
   const response = await fetch(tokenEndpoint, {
@@ -102,14 +105,17 @@ const getRefreshToken = async () => {
   currentToken.save(await response.json());
 }
 
-const getUserData = async () => {
-  const response = await fetch("https://api.spotify.com/v1/me", {
-    method: 'GET',
-    headers: { 
-      'Authorization': 'Bearer ' + currentToken.access_token 
-    },
-  });
-  return await response.json();
+const startRefreshToken = async code => {
+  // Check every 30 seconds
+  setInterval(async () => {
+    const timeLeft = currentToken.expires - Date.now();
+
+    // Refresh if there is less than 2 minutes left
+    if (timeLeft < TOKEN_MIN_TIME_LEFT) {
+      console.log("Refreshing token")
+      await refreshToken();
+    }
+  }, TOKEN_CHECK);
 }
 
 const loginWithSpotifyClick = () => {
@@ -142,43 +148,50 @@ const base64encode = (input) => {
 ---------- Authorisation script ----------
 */
 export const authorize = () => {
-  const btn = document.getElementById('btn')
-  btn.addEventListener('click', async () => {
+  return new Promise(async (resolve, reject) => {
     clientId = await window.spotify.getClientId();
     redirectUri = await window.spotify.getRedirectUri();
     loginWithSpotifyClick();
-  })
 
-  // On redirect, receive authorisation code and state sent by the main process
-  window.spotify.onAuthCode(async (data) => {
-    const code = data['code'];
-    const state = data['state'];
+    // On redirect, receive authorisation code and state sent by the main process
+    window.spotify.onAuthCode(async (data) => {
+      try {
+        const code = data['code'];
+        const state = data['state'];
 
-    // If a code is found, we're in a callback, do a token exchange
-    if (code) {
-      // Compare the state parameter received in the redirection URI
-      // with the state parameter originally provided to Spotify in the authorization URI
-      const storedState = window.localStorage.getItem('state');
-      if (state != storedState) {
-        console.error("State mismatch.");
-        throw new Error("State mismatch.");
-      }
+        if (!code) {
+          window.spotify.closeAuthWindow();
+          return resolve(false);
+        }
 
-      await getToken(code);
+        // If a code is found, we're in a callback, do a token exchange
+        // Compare the state parameter received in the redirection URI
+        // with the state parameter originally provided to Spotify in the authorization URI
+        const storedState = window.localStorage.getItem('state');
+        if (state != storedState) {
+          console.error("State mismatch.");
+          throw new Error("State mismatch.");
+        }
 
-      // Remove query parameters from URL so we can refresh correctly
-      const url = new URL(window.location.href);
-      url.searchParams.delete("code");
-      url.searchParams.delete("state");
+        await getToken(code);
 
-      const updatedUrl = url.search ? url.href : url.href.replace('?', '');
-      window.history.replaceState({}, "", updatedUrl);
+        // Remove query parameters from URL so we can refresh correctly
+        const url = new URL(window.location.href);
+        url.searchParams.delete("code");
+        url.searchParams.delete("state");
 
-      // If we have a token (we're logged in), fetch user data 
-      if (currentToken.access_token) {
-        const userData = await getUserData();
-      }
-    }
-    window.spotify.closeAuthWindow();
-  })
+        const updatedUrl = url.search ? url.href : url.href.replace('?', '');
+        window.history.replaceState({}, "", updatedUrl);
+
+        // If we have a token (we're logged in), return true;
+        if (currentToken.access_token) {
+          startRefreshToken();
+          window.spotify.closeAuthWindow();
+          return resolve(true);
+        }
+        window.spotify.closeAuthWindow();
+        resolve(false);
+      } catch (err) { reject(err); }
+    });
+  });
 }

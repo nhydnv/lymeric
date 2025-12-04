@@ -1,16 +1,27 @@
+const page = (html, js) => ({html, js});
+
 export const routes = {
-  home: "pages/home.html",
+    login: page("pages/login.html", "pages/login.js"),
+    home: page("pages/home.html", "pages/home.js"),
 };
 
 export async function navigateTo(route) {
-  const container = document.getElementById("app");
+    const container = document.getElementById("app");
 
-  const pageUrl = routes[route];
-  if (!pageUrl) {
-    container.innerHTML = `<h2>404 Not Found</h2>`;
-    return;
-  }
+    const pageModule = routes[route];
+    if (!pageModule) {
+        containerontainer.innerHTML = `<h2>404 Not Found</h2>`;
+        return;
+    }
 
-  const page = await window.pages.loadPage(pageUrl);
-  container.innerHTML = page;
+    // Load HTML
+    try {
+        // Load and run page module
+        const pageHTML = await window.pages.loadPage(pageModule.html);
+        container.innerHTML = pageHTML;
+        const pageJS = await import(`./${pageModule.js}`);
+        if (pageJS.init) pageJS.init();   // Call exported init()
+    } catch (err) {
+        container.innerHTML = '<p>An error occured while loading page.</p>';
+    }
 }
