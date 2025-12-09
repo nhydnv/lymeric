@@ -2,10 +2,12 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
 const http = require('http');
 const { readFile } = require('node:fs/promises');
-const { getAuthWindow, handleCloseAuthWindow, handleRedirectToSpotifyAuthorize,
-         handleGetToken, handleRefreshToken
+const { getAuthWindow, closeAuthWindow, redirectToSpotifyAuthorize,
+         getToken, refreshToken
 } = require('./authorization');
+const { getCurrentlyPlaying, openWebPlayer } = require('./data.js');
 const { redirectUri } = require('./config');
+const puppeteer = require('puppeteer');
 
 let mainWindow;
 
@@ -61,12 +63,20 @@ const loadPage = async (event, relativePath) => {
 
 // Create the main window
 app.whenReady().then(() => {
-  ipcMain.on('close-auth-window', handleCloseAuthWindow);
-  ipcMain.handle('redirect', handleRedirectToSpotifyAuthorize);
-  ipcMain.handle('get-token', handleGetToken);
-  ipcMain.handle('refresh-token', handleRefreshToken);
+  // Spotify OAuth
+  ipcMain.on('close-auth-window', closeAuthWindow);
+  ipcMain.handle('redirect', redirectToSpotifyAuthorize);
+  ipcMain.handle('get-token', getToken);
+  ipcMain.handle('refresh-token', refreshToken);
 
   ipcMain.handle('load-page', loadPage);
+
+  // API calls
+  ipcMain.handle('get-currently-playing', getCurrentlyPlaying);
+
+  // Web scraping
+  ipcMain.handle('open-web-player', openWebPlayer);
+
   createWindow();
   if (createAuthServer()) {
     mainWindow.webContents.send("auth-code", { code, state });

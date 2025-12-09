@@ -10,6 +10,7 @@ const authorizationEndpoint = "https://accounts.spotify.com/authorize";
 const scope = 'user-read-playback-state user-modify-playback-state user-read-currently-playing streaming';
 
 let authWindow;
+let cookies;
 
 const openAuthWindow = (url) => {
   // Prevents opening multiple auth windows
@@ -30,6 +31,13 @@ const openAuthWindow = (url) => {
 
   authWindow.loadURL(url);
   authWindow.setMenuBarVisibility(false);
+  authWindow.webContents.on('did-finish-load', () => {
+    setCookies();
+  });
+
+  authWindow.on('close', () => {
+    setCookies(); 
+  });
 
   // Clean up
   authWindow.on('closed', () => {
@@ -37,9 +45,9 @@ const openAuthWindow = (url) => {
   });
 }
 
-const handleCloseAuthWindow = event => { authWindow.close(); }
+const closeAuthWindow = event => { authWindow.close(); }
 
-const handleGetToken = async (event, code, codeVerifier) => {
+const getToken = async (event, code, codeVerifier) => {
   const url = tokenEndpoint;
   const payload = {
     method: 'POST',
@@ -60,7 +68,7 @@ const handleGetToken = async (event, code, codeVerifier) => {
 }
 
 // Refresh token once the current access token expires
-const handleRefreshToken = async (refreshToken) => {
+const refreshToken = async (refreshToken) => {
   const response = await fetch(tokenEndpoint, {
     method: 'POST',
     headers: {
@@ -75,7 +83,7 @@ const handleRefreshToken = async (refreshToken) => {
   return await response.json();
 }
 
-const handleRedirectToSpotifyAuthorize = async (event, codeChallenge, state) =>  {
+const redirectToSpotifyAuthorize = async (event, codeChallenge, state) =>  {
   const authUrl = new URL(authorizationEndpoint);
 
   const params =  {
@@ -92,10 +100,19 @@ const handleRedirectToSpotifyAuthorize = async (event, codeChallenge, state) => 
   openAuthWindow(authUrl.toString());
 }
 
+const setCookies = () => {
+  if (!authWindow) return;
+  authWindow.webContents.session.cookies.get({})
+  .then(result => {
+    cookies = result;
+  });
+}
+
 module.exports = {
   getAuthWindow: () => authWindow,
-  handleCloseAuthWindow,
-  handleRedirectToSpotifyAuthorize,
-  handleGetToken,
-  handleRefreshToken,
+  getCookies: () => cookies,
+  closeAuthWindow,
+  redirectToSpotifyAuthorize,
+  getToken,
+  refreshToken,
 };

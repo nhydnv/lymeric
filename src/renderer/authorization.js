@@ -5,7 +5,7 @@ const TOKEN_CHECK = 30_000;           // Check token expiry every 30s
 const TOKEN_MIN_TIME_LEFT = 120_000;  // Refresh token if current token expires in less than 2 minutes
 
 // Data structure that manages the current active token, caching it in localStorage
-const currentToken = {
+export const currentToken = {
   save: function (response) {
     const { access_token, refresh_token, expires_in } = response;
     window.localStorage.setItem('access_token', access_token);
