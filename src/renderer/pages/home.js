@@ -2,7 +2,8 @@ import { currentToken } from './../authorization.js';
 
 const songTitle = document.getElementById('song-title');
 
-window.spotify.openWebPlayer();
+await window.spotify.openWebPlayer();
+await window.spotify.getLyrics();
 
 // get name of the currenly playing track
 setInterval(async () => {

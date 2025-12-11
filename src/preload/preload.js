@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('spotify', {
   getToken: (code, codeVerifier) => ipcRenderer.invoke('get-token', code, codeVerifier),
   refreshToken: (token) => ipcRenderer.invoke('refresh-token', token),
   openWebPlayer: () => ipcRenderer.invoke('open-web-player'),
+  getLyrics: () => ipcRenderer.send('get-lyrics'),
 });
 
 contextBridge.exposeInMainWorld('pages', {

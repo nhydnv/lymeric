@@ -5,9 +5,8 @@ const { readFile } = require('node:fs/promises');
 const { getAuthWindow, closeAuthWindow, redirectToSpotifyAuthorize,
          getToken, refreshToken
 } = require('./authorization');
-const { getCurrentlyPlaying, openWebPlayer } = require('./data.js');
+const { getCurrentlyPlaying, openWebPlayer, getLyrics } = require('./data.js');
 const { redirectUri } = require('./config');
-const puppeteer = require('puppeteer');
 
 let mainWindow;
 
@@ -76,6 +75,7 @@ app.whenReady().then(() => {
 
   // Web scraping
   ipcMain.handle('open-web-player', openWebPlayer);
+  ipcMain.on('get-lyrics', getLyrics);
 
   createWindow();
   if (createAuthServer()) {
