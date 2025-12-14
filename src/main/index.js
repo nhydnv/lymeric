@@ -5,7 +5,7 @@ const { readFile } = require('node:fs/promises');
 const { getAuthWindow, closeAuthWindow, redirectToSpotifyAuthorize,
          getToken, refreshToken
 } = require('./authorization');
-const { getCurrentlyPlaying, openWebPlayer, getLyrics } = require('./data.js');
+const { getPlaybackState, openWebPlayer, getLyrics } = require('./data.js');
 const { redirectUri } = require('./config');
 
 let mainWindow;
@@ -71,11 +71,11 @@ app.whenReady().then(() => {
   ipcMain.handle('load-page', loadPage);
 
   // API calls
-  ipcMain.handle('get-currently-playing', getCurrentlyPlaying);
+  ipcMain.handle('get-playback-state', getPlaybackState);
 
   // Web scraping
   ipcMain.handle('open-web-player', openWebPlayer);
-  ipcMain.on('get-lyrics', getLyrics);
+  ipcMain.handle('get-lyrics', getLyrics);
 
   createWindow();
   if (createAuthServer()) {

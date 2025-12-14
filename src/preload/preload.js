@@ -7,7 +7,7 @@ contextBridge.exposeInMainWorld('spotify', {
   getToken: (code, codeVerifier) => ipcRenderer.invoke('get-token', code, codeVerifier),
   refreshToken: (token) => ipcRenderer.invoke('refresh-token', token),
   openWebPlayer: () => ipcRenderer.invoke('open-web-player'),
-  getLyrics: () => ipcRenderer.send('get-lyrics'),
+  getLyrics: (id) => ipcRenderer.invoke('get-lyrics', id),
 });
 
 contextBridge.exposeInMainWorld('pages', {
@@ -15,5 +15,5 @@ contextBridge.exposeInMainWorld('pages', {
 });
 
 contextBridge.exposeInMainWorld('api', {
-  getCurrentlyPlaying: (token) => ipcRenderer.invoke('get-currently-playing', token),
+  getPlaybackState: (token) => ipcRenderer.invoke('get-playback-state', token),
 });
