@@ -54,7 +54,9 @@ const openWebPlayer = async (event) => {
         if (trackId) {
           lyricsCache.set(trackId, data);
         }
-      } catch {}
+      } catch(err) {
+        console.error(err);
+      }
     }
   });
 };
