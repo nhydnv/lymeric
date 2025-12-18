@@ -10,8 +10,8 @@ const { redirectUri } = require('./config');
 
 let mainWindow;
 
-const MAIN_WINDOW_WIDTH = 600;
-const MAIN_WINDOW_HEIGHT = 300;
+const MAIN_WINDOW_WIDTH = 400;
+const MAIN_WINDOW_HEIGHT = 150;
 
 /*
 const protocol = "myapp";
@@ -22,10 +22,14 @@ const createWindow = () => {
   mainWindow = new BrowserWindow({
     width: MAIN_WINDOW_WIDTH,
     height: MAIN_WINDOW_HEIGHT,
+    titleBarStyle: 'hidden',  // Remove the default title bar
+    resizable: false,
     webPreferences: {
       contextIsolation: true,
       preload: path.join(__dirname, '../preload/preload.js'),
     },
+    opacity: 0.9,
+    frame: false,
   });
 
   mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
@@ -34,6 +38,14 @@ const createWindow = () => {
     const authWindow = getAuthWindow();
     if (authWindow) { authWindow.close(); }
   });
+}
+
+const closeWindow = (event) => {
+  if (mainWindow) mainWindow.close();
+}
+
+const minimizeWindow = (event) => {
+  if (mainWindow) mainWindow.minimize();
 }
 
 // Create a server to redirect to after user authorised with Spotify
@@ -62,6 +74,10 @@ const loadPage = async (event, relativePath) => {
 
 // Create the main window
 app.whenReady().then(() => {
+  // Window controls
+  ipcMain.on('close-window', closeWindow);
+  ipcMain.on('minimize-window', minimizeWindow);
+
   // Spotify OAuth
   ipcMain.on('close-auth-window', closeAuthWindow);
   ipcMain.handle('redirect', redirectToSpotifyAuthorize);

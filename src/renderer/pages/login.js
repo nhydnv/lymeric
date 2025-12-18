@@ -16,3 +16,7 @@ export const init = () => {
     });
   });
 }
+
+// Styling
+const titleBar = document.getElementsByClassName("title-bar")[0];
+if (titleBar) titleBar.id = "login-title-bar";

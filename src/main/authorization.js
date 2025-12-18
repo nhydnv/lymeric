@@ -45,7 +45,9 @@ const openAuthWindow = (url) => {
   });
 }
 
-const closeAuthWindow = event => { authWindow.close(); }
+const closeAuthWindow = event => { 
+  if (authWindow) authWindow.close(); 
+}
 
 const getToken = async (event, code, codeVerifier) => {
   const url = tokenEndpoint;

@@ -10,6 +10,11 @@ contextBridge.exposeInMainWorld('spotify', {
   getLyrics: (id) => ipcRenderer.invoke('get-lyrics', id),
 });
 
+contextBridge.exposeInMainWorld('controls', {
+  closeWindow: () => ipcRenderer.send('close-window'),
+  minimizeWindow: () => ipcRenderer.send('minimize-window'),
+});
+
 contextBridge.exposeInMainWorld('pages', {
   loadPage: (url) => ipcRenderer.invoke('load-page', url),
 });
