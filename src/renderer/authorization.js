@@ -18,7 +18,10 @@ export const currentToken = {
   },
   get access_token() { return window.localStorage.getItem('access_token') || null; },
   get refresh_token() { return window.localStorage.getItem('refresh_token') || null; },
-  get expires_in() { return window.localStorage.getItem('expires_in') || null },
+  get expires_in() { 
+    const expires = window.localStorage.getItem('expires');
+    return (expires) ? new Date(expires) - Date.now() : null;
+  },
   get expires() { return window.localStorage.getItem('expires') || null },
 };
 
@@ -55,10 +58,10 @@ const refreshToken = async () => {
   currentToken.save(response);
 }
 
-const startRefreshToken = async () => {
+export const startRefreshToken = async () => {
   // Check every 30 seconds
   setInterval(async () => {
-    const timeLeft = new Date(currentToken.expires).getTime() - Date.now()
+    const timeLeft = new Date(currentToken.expires).getTime() - Date.now();
 
     // Refresh if there is less than 2 minutes left
     if (timeLeft < TOKEN_MIN_TIME_LEFT) {

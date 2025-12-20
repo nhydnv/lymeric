@@ -1,4 +1,4 @@
-const { BrowserWindow } = require('electron');
+const { BrowserWindow, session } = require('electron');
 const path = require('node:path');
 const { clientId, redirectUri } = require('./config');
 
@@ -10,7 +10,6 @@ const authorizationEndpoint = "https://accounts.spotify.com/authorize";
 const scope = 'user-read-playback-state user-modify-playback-state user-read-currently-playing streaming';
 
 let authWindow;
-let cookies;
 
 const openAuthWindow = (url) => {
   // Prevents opening multiple auth windows
@@ -31,13 +30,6 @@ const openAuthWindow = (url) => {
 
   authWindow.loadURL(url);
   authWindow.setMenuBarVisibility(false);
-  authWindow.webContents.on('did-finish-load', () => {
-    setCookies();
-  });
-
-  authWindow.on('close', () => {
-    setCookies(); 
-  });
 
   // Clean up
   authWindow.on('closed', () => {
@@ -71,6 +63,7 @@ const getToken = async (event, code, codeVerifier) => {
 
 // Refresh token once the current access token expires
 const refreshToken = async (refreshToken) => {
+  console.log('Refreshing token...');
   const response = await fetch(tokenEndpoint, {
     method: 'POST',
     headers: {
@@ -102,17 +95,14 @@ const redirectToSpotifyAuthorize = async (event, codeChallenge, state) =>  {
   openAuthWindow(authUrl.toString());
 }
 
-const setCookies = () => {
-  if (!authWindow) return;
-  authWindow.webContents.session.cookies.get({})
-  .then(result => {
-    cookies = result;
-  });
+const getCookies = async () => {
+  const currentSession = session.defaultSession;
+  return await currentSession.cookies.get({});
 }
 
 module.exports = {
   getAuthWindow: () => authWindow,
-  getCookies: () => cookies,
+  getCookies,
   closeAuthWindow,
   redirectToSpotifyAuthorize,
   getToken,

@@ -12,7 +12,7 @@ export const init = () => {
   newBtn.addEventListener("click", async () => {
     authorize().then((authorized) => {
       if (authorized) navigateTo('home');
-      else navigateTo('login');
+      else navigateTo('login', true);
     });
   });
 }

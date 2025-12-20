@@ -5,12 +5,12 @@ export const routes = {
   home: page("pages/home.html", "pages/home.js"),
 };
 
-export async function navigateTo(route) {
+export async function navigateTo(route, reload=false) {
   const container = document.getElementById("app");
 
   const pageModule = routes[route];
   if (!pageModule) {
-    containerontainer.innerHTML = `<h2>404 Not Found</h2>`;
+    container.innerHTML = `<h2>404 Not Found</h2>`;
     return;
   }
 
@@ -21,6 +21,8 @@ export async function navigateTo(route) {
     container.innerHTML = pageHTML;
     const pageJS = await import(`./${pageModule.js}`);
     if (pageJS.init) pageJS.init();   // Call exported init()
+    if (reload) window.location.reload();
+    window.localStorage.setItem('path', route);
   } catch (err) {
     console.log(err);
     container.innerHTML = '<p>An error occured while loading this page.</p>';

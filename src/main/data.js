@@ -4,11 +4,15 @@ const { getCookies } = require('./authorization');
 const api = "https://api.spotify.com/v1";
 let page;
 let lyricsCache = new Map();
+let isLoaded = false;
 
 const openWebPlayer = async (event) => {
-  const cookies = getCookies();
+  if (isLoaded) return;
+
+  const cookies = await getCookies();
 
   const browser = await puppeteer.launch({
+    headless: false,
     executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
   });
   [page] = await browser.pages();
@@ -58,11 +62,13 @@ const openWebPlayer = async (event) => {
       }
     }
   });
+
+  page.on('close', () => isLoaded = false);
+
+  isLoaded = true;
 };
 
 const getLyrics = async (event, id) => {
-  if (!page) return;
-
   const lyricsButton = 'button[data-testid="lyrics-button"]';
 
   // Check if the track has lyrics, if yes, open lyrics tab

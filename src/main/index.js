@@ -3,7 +3,7 @@ const path = require('node:path');
 const http = require('http');
 const { readFile } = require('node:fs/promises');
 const { getAuthWindow, closeAuthWindow, redirectToSpotifyAuthorize,
-         getToken, refreshToken
+        getToken, refreshToken
 } = require('./authorization');
 const { getPlaybackState, openWebPlayer, getLyrics } = require('./data.js');
 const { redirectUri } = require('./config');
