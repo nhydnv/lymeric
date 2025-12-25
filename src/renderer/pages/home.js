@@ -6,10 +6,11 @@ const lyricMain = document.getElementById('lyric-main');
 const lyricNext = document.getElementById('lyric-next');
 const unsyncedMsg = document.getElementById('unsynced-msg');
 
-const isPlaying = false;
+let isPlaying = false;
+// Flag if user modified playback using in-app controls (as opposed to Spotify's)
+let playbackModified = true;  
 const playPauseBtn = document.getElementById('play-pause');
-const playIcon = document.getElementById('play-btn');
-const pauseIcon = document.getElementById('pause-btn');
+const playbackBtns = document.querySelectorAll('.playback-btn');
 
 // Find the lyrics position the user is currently at using a binary search approach
 const findLyricsPosition = (startTimes, currentTime) => {
@@ -40,6 +41,7 @@ const clampLyricHeight = () => {
   }
 }
 
+// Scrolling song title effect if song title's too long
 const clampSongWidth = () => {
   const container = document.querySelector('#now-playing p');
   const scrollContainer = document.querySelector('.scroll-container');
@@ -57,6 +59,11 @@ const clampSongWidth = () => {
   }
 }
 
+// Playback buttons enable/disable
+const enablePlayback = () => playbackBtns.forEach(btn => btn.disabled = false);
+const disablePlayback = () => playbackBtns.forEach(btn => btn.disabled = true);
+
+
 // Loading "animation" while Puppeteer opens the web player
 let count = 0;
 const intervalId = setInterval(() => {
@@ -64,8 +71,10 @@ const intervalId = setInterval(() => {
   ++count;
 }, 500);
 
-await window.spotify.openWebPlayer();
-clearInterval(intervalId);  // Stop loading animation
+disablePlayback();                     // Disable playback buttons until web player is opened
+await window.spotify.openWebPlayer();  // Open web player
+clearInterval(intervalId);             // Stop loading animation
+enablePlayback();                      // Re-enable playback buttons
 
 let previousTrack = "";
 let lyrics;
@@ -76,9 +85,20 @@ setInterval(async () => {
 
   const state = await window.api.getPlaybackState(currentToken.access_token);
   if (state) {
+    enablePlayback();
     const trackName = state['item']['name'];
     const trackId = state['item']['id'];
     const artists = state['item']['artists'].map(artist => artist['name']);
+
+    // Check if user modified playback using Spotify controls
+    if (!playbackModified) {
+      isPlaying = state['is_playing'];
+    }
+    playbackModified = false;
+    playPauseBtn.innerHTML = isPlaying ? '<pause-button />' : '<play-button />';
+
+    // Display either play or pause
+    playPauseBtn.innerHTML = isPlaying ? '<pause-button />' : '<play-button />';
 
     // On track change
     if (trackName !== previousTrack) {
@@ -90,8 +110,6 @@ setInterval(async () => {
           startTimes = [];
           const len = lyrics['lyrics']['lines'].length;
           const step = Math.floor(state['item']['duration_ms'] / len);
-          console.log(len);
-          console.log(step);
           for (let i = 0; i < len; i++) {
             startTimes.push(i * step);
           }
@@ -107,7 +125,6 @@ setInterval(async () => {
     previousTrack = trackName;
 
     if (lyrics) {
-      console.log(startTimes);
       let lineIndex = findLyricsPosition(startTimes, state['progress_ms']);
       lyricPrev.textContent = lineIndex > 0 ? lyrics['lyrics']['lines'][lineIndex - 1]['words'] : '';
       lyricMain.textContent = lineIndex !== -1 ? lyrics['lyrics']['lines'][lineIndex]['words'] : `\u{266A}`;
@@ -121,10 +138,25 @@ setInterval(async () => {
       lyricNext.textContent = '';
     }
   } else {
+    disablePlayback();
     // 204 No Content: No song playing or try relaunching Spotify app
     songInfo.textContent = '-';
+    clampSongWidth();
     lyricPrev.textContent = '';
     lyricMain.textContent = '\u{266A} Start playing something \u{266A}';
     lyricNext.textContent = '';
   }
 }, 1000);  // Poll every second to detect song changes
+
+// Play/pause button logic
+playPauseBtn.addEventListener('click', async () => {
+  playbackModified = true;
+  isPlaying = !isPlaying;
+  if (!isPlaying) {
+    playPauseBtn.innerHTML ='<play-button />';
+    await window.api.pausePlayback(currentToken.access_token);
+  } else {
+    playPauseBtn.innerHTML ='<pause-button />';
+    await window.api.startPlayback(currentToken.access_token);
+  }
+});

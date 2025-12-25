@@ -21,4 +21,6 @@ contextBridge.exposeInMainWorld('pages', {
 
 contextBridge.exposeInMainWorld('api', {
   getPlaybackState: (token) => ipcRenderer.invoke('get-playback-state', token),
+  startPlayback: (token) => ipcRenderer.send('start-playback', token),
+  pausePlayback: (token) => ipcRenderer.send('pause-playback', token),
 });

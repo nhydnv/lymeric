@@ -112,7 +112,7 @@ const requestData = async (token, path) => {
     }
     return await response.json();
   } catch (error) {
-    console.error(error.message);
+    console.error(`requestData: ${error.message}`);
   }
 }
 
@@ -139,8 +139,35 @@ const waitForLyrics = (trackId, timeout=3000) => {
   });
 };
 
+const modifyPlayback = async (token, path) => {
+  if (safeStorage.isEncryptionAvailable()) {
+    token = safeStorage.decryptString(Buffer.from(token, 'base64'));
+  }
+  try {
+    const response = await fetch(`${api}${path}`, {
+      method: "PUT",
+      headers: { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
+    if (!response.ok) {
+      throw new Error(`Response status: ${response.status}`);
+    }
+  } catch (error) {
+    console.error(`modifyPlayback: ${error.message}`);
+  }
+}
+
+const startPlayback = async (event, token) => modifyPlayback(token, '/me/player/play');
+
+const pausePlayback = async (event, token) => modifyPlayback(token, '/me/player/pause');
+
 module.exports = {
   getPlaybackState,
   openWebPlayer,
   getLyrics,
+  startPlayback,
+  pausePlayback,
 }

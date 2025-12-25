@@ -242,6 +242,10 @@ title-bar {
   padding: 0;
 }
 
+.playback-btn:disabled {
+  opacity: 0.5;
+}
+
 /* TEMP */
 #home-page #settings {
   height: 10px;

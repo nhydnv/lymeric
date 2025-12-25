@@ -2,14 +2,13 @@ const { BrowserWindow, session, safeStorage } = require('electron');
 const { Buffer } = require('node:buffer');
 const path = require('node:path');
 const { clientId, redirectUri } = require('./config');
-const { ref } = require('node:process');
 
 const AUTH_WINDOW_WIDTH = 600;
 const AUTH_WINDOW_HEIGHT = 800;
 
 const tokenEndpoint = "https://accounts.spotify.com/api/token";
 const authorizationEndpoint = "https://accounts.spotify.com/authorize";
-const scope = 'user-read-playback-state user-modify-playback-state user-read-currently-playing streaming';
+const scope = 'user-read-playback-state user-modify-playback-state';
 
 let authWindow;
 
