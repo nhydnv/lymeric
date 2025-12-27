@@ -1,8 +1,9 @@
 const page = (html, js) => ({html, js});
 
 export const routes = {
-  login: page("pages/login.html", "pages/login.js"),
-  home: page("pages/home.html", "pages/home.js"),
+  login: page('pages/login.html', 'pages/login.js'),
+  home: page('pages/home.html', 'pages/home.js'),
+  error: page('pages/error.html', 'pages/error.js'),
 };
 
 export async function navigateTo(route, reload=false) {
@@ -27,4 +28,4 @@ export async function navigateTo(route, reload=false) {
     console.log(err);
     container.innerHTML = '<p>An error occured while loading this page.</p>';
   }
-}
+};

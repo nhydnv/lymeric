@@ -21,7 +21,9 @@ contextBridge.exposeInMainWorld('pages', {
 
 contextBridge.exposeInMainWorld('api', {
   getPlaybackState: (token) => ipcRenderer.invoke('get-playback-state', token),
-  startPlayback: (token) => ipcRenderer.send('start-playback', token),
-  pausePlayback: (token) => ipcRenderer.send('pause-playback', token),
   getCurrentUser: (token) => ipcRenderer.invoke('get-current-user', token),
+  startPlayback: (token) => ipcRenderer.invoke('start-playback', token),
+  pausePlayback: (token) => ipcRenderer.invoke('pause-playback', token),
+  skipToNext: (token) => ipcRenderer.invoke('skip-to-next', token),
+  skipToPrevious: (token) => ipcRenderer.invoke('skip-to-previous', token),
 });

@@ -8,6 +8,7 @@ let page;
 let lyricsCache = new Map();
 let isLoaded = false;
 
+/* ---------- Get lyrics ---------- */
 const openWebPlayer = async (event) => {
   if (isLoaded) return;
 
@@ -103,30 +104,6 @@ const getLyrics = async (event, id) => {
   return await waitForLyrics(id);
 }
 
-const getPlaybackState = async (event, token) => requestData(token, "/me/player");
-
-const getCurrentUser = async (event, token) => requestData(token, "/me");
-
-const requestData = async (token, path) => {
-  if (safeStorage.isEncryptionAvailable()) {
-    token = safeStorage.decryptString(Buffer.from(token, 'base64'));
-  }
-  try {
-    const response = await fetch(`${api}${path}`, {
-      method: "GET",
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (!response.ok) {
-      throw new Error(`Response status: ${response.status}`);
-    } else if (response.status === 204) {  // No active Spotify device
-      return null;
-    }
-    return await response.json();
-  } catch (error) {
-    console.error(`requestData: ${error.message}`);
-  }
-}
-
 // Helper that waits for lyrics to be cached
 const waitForLyrics = (trackId, timeout=3000) => {
   return new Promise((resolve) => {
@@ -150,13 +127,56 @@ const waitForLyrics = (trackId, timeout=3000) => {
   });
 };
 
-const modifyPlayback = async (token, path) => {
+/* ---------- Get user/track info ---------- */
+const getPlaybackState = async (event, token) => requestData(token, "/me/player");
+const getCurrentUser = async (event, token) => requestData(token, "/me");
+
+const requestData = async (token, path) => {
   if (safeStorage.isEncryptionAvailable()) {
     token = safeStorage.decryptString(Buffer.from(token, 'base64'));
   }
   try {
     const response = await fetch(`${api}${path}`, {
-      method: "PUT",
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!response.ok) {
+      return {
+        ok: false,
+        status: response.status,
+        data: null,
+      };
+    } else if (response.status === 204) {
+      // 204: No active Spotify device
+      return {
+        ok: true,
+        status: response.status,
+        data: null,
+      };
+    }
+    return {
+      ok: true,
+      status: response.status,
+      data: await response.json(),
+    };
+  } catch (error) {
+    console.error(`requestData: ${error.message}`);
+  }
+}
+
+/* ---------- Play/pause/skip to next/skip to previous commands  ---------- */
+const startPlayback = async (event, token) => modifyPlayback(token, 'PUT', '/me/player/play');
+const pausePlayback = async (event, token) => modifyPlayback(token, 'PUT', '/me/player/pause');
+const skipToNext = async (event, token) => modifyPlayback(token, 'POST', '/me/player/next');
+const skipToPrevious = async (event, token) => modifyPlayback(token, 'POST', '/me/player/previous');
+
+const modifyPlayback = async (token, method, path) => {
+  if (safeStorage.isEncryptionAvailable()) {
+    token = safeStorage.decryptString(Buffer.from(token, 'base64'));
+  }
+  try {
+    const response = await fetch(`${api}${path}`, {
+      method: method,
       headers: { 
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -164,22 +184,21 @@ const modifyPlayback = async (token, path) => {
       body: JSON.stringify({}),
     });
     if (!response.ok) {
-      throw new Error(`Response status: ${response.status}`);
+      return { ok: false, status: response.status };
     }
+    return { ok: true, status: response.status };
   } catch (error) {
     console.error(`modifyPlayback: ${error.message}`);
   }
 }
 
-const startPlayback = async (event, token) => modifyPlayback(token, '/me/player/play');
-
-const pausePlayback = async (event, token) => modifyPlayback(token, '/me/player/pause');
-
 module.exports = {
   getPlaybackState,
+  getCurrentUser,
   openWebPlayer,
   getLyrics,
   startPlayback,
   pausePlayback,
-  getCurrentUser,
+  skipToNext,
+  skipToPrevious,
 }
