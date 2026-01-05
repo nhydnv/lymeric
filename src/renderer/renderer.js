@@ -7,6 +7,10 @@ FONTS.forEach(f => {
   const newFont = new FontFace(
     f.family,
     `url("./../assets/fonts/${f.file}") format("truetype")`,
+    {
+      weight: f.weight,
+      style: f.style,
+    },
   );
   newFont.load().then(() => {
     document.fonts.add(newFont);

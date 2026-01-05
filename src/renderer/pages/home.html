@@ -1,7 +1,12 @@
 <div id="home-page" class="page">
   <title-bar></title-bar>
-  <div>
-    <button id="settings">Settings</button>
+  <div id="settings-bar">
+    <button title="Edit font" id="edit-font">Aa</button>
+    <button title="Edit theme" id="edit-theme">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="5" cy="5" r="4.5" fill="#D9D9D9" stroke="white"/>
+      </svg>
+    </button>
   </div>
   <div id="now-playing">
     <p>
@@ -21,7 +26,7 @@
     <p id="unsynced-msg">Lyrics aren't synced to the song yet.</p>
   </div>
   <!-- Do not remove this div else you die -->
-  <div id="playback-container">
+  <div id="controls-container">
     <div id="playback-controls">
       <button type="button" id="rewind" class="playback-btn" title="Rewind" disabled>
         <svg width="13" height="9" viewBox="0 0 13 9" fill="none" xmlns="http://www.w3.org/2000/svg">
