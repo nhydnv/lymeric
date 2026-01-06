@@ -1,5 +1,8 @@
 import { currentToken } from './../authorization.js';
 import { navigateTo } from '../router.js';
+import { FONTS } from '../styles/fonts.js';
+
+const homePage = document.getElementById('home-page');
 
 let halted = false;
 
@@ -13,7 +16,7 @@ const songInfo = document.getElementById('song-info');
 const lyricPrev = document.getElementById('lyric-prev');
 const lyricMain = document.getElementById('lyric-main');
 const lyricNext = document.getElementById('lyric-next');
-const unsyncedMsg = document.getElementById('unsynced-msg');
+const infoMsg = document.getElementById('info-msg');
 
 // Playback controls logic
 let isPlaying = false;
@@ -31,7 +34,13 @@ let playbackProgressMs = 0;  // Overall playback progress
 let trackDurationMs = 0;     // Track duration
 let progressId = null;
 
+const fontClasses = FONTS.map(f => `font-${f.id}`);
+let currentFont = window.localStorage.getItem('font') || 'epilogue';
+
 const main = async () => {
+  setFont(currentFont);
+  createFontButtons();
+
   if (!currentToken.access_token) { 
     fail();
     return;
@@ -106,6 +115,11 @@ const main = async () => {
     const pos = state['progress_ms'] + SKIP_MS;
     await invoke(window.api.seekToPosition(currentToken.access_token, pos));
   });
+
+  const editFontBtn = document.getElementById('edit-font');
+  editFontBtn.addEventListener('click', () => {
+
+  });
 };
 
 const displayLyrics = async () => {  
@@ -133,7 +147,7 @@ const displayLyrics = async () => {
     // On track change
     if (trackName !== previousTrack) {
       lyrics = await window.spotify.getLyrics(trackId);
-      unsyncedMsg.style.display = 'none';
+      hideInfo();
       if (lyrics) {
         // If lyrics are unsynced, distribute lyrics equally
         if (lyrics['lyrics']['syncType'] === 'UNSYNCED') {
@@ -143,7 +157,7 @@ const displayLyrics = async () => {
           for (let i = 0; i < len; i++) {
             startTimes.push(i * step);
           }
-          unsyncedMsg.style.display = 'block';
+          showInfo("Lyrics aren't synced to the song yet.");
         } else {
           startTimes = lyrics['lyrics']['lines'].map(line => line['startTimeMs']);
         }
@@ -226,6 +240,15 @@ const clampSongWidth = () => {
   }
 };
 
+const showInfo = (msg) => {
+  infoMsg.textContent = msg;
+  infoMsg.style.display = 'block';
+}
+
+const hideInfo = () => {
+  infoMsg.style.display = 'none';
+}
+
 // Get user's Spotify subscription
 const getSubscription = async () => {
   const user = await invoke(window.api.getCurrentUser(currentToken.access_token));
@@ -278,6 +301,33 @@ const startProgress = () => {
 };
 
 const stopProgress = () => cancelAnimationFrame(progressId);
+
+const createFontButtons = () => {
+  const fontBar = document.getElementById('font-controls');
+  FONTS.forEach(f => {
+    const fontBtn = document.createElement('button');
+    fontBtn.textContent = 'Aa';
+    fontBtn.classList.add('font-btn', `font-${f.id}`);
+    fontBtn.title = f.family;
+    fontBtn.addEventListener('click', () => {
+      setFont(f.id);
+      window.localStorage.setItem('font', f.id);
+      currentFont = f.id;
+    });
+    fontBtn.addEventListener('mouseenter', () => {
+      setFont(f.id);
+    });
+    fontBtn.addEventListener('mouseleave', () => {
+      setFont(currentFont);
+    });
+    fontBar.appendChild(fontBtn);
+  });
+};
+
+const setFont = (fontId) => {
+  homePage.classList.remove(...fontClasses);
+  homePage.classList.add(`font-${fontId}`);
+};
 
 const invoke = async (promise) => {
   if (halted) return null;

@@ -1,11 +1,6 @@
 :root {
   /* Fonts */
-  --epilogue: "Epilogue", -apple-system, BlinkMacSystemFont, "Avenir Next", "Avenir", "Segoe UI", "Helvetica Neue", "Adwaita Sans"," Cantarell", 'Ubuntu', "Roboto", "Noto", "Helvetica", "Arial", sans-serif; 
-  --noto-mono: "Noto Sans Mono", Menlo, Consolas, Monaco, Adwaita Mono, "Liberation Mono", "Lucida Console", monospace;
-  --newsreader: "Newsreader", 'Iowan Old Style', 'Apple Garamond', Baskerville, 'Times New Roman',' Droid Serif', Times, 'Source Serif Pro', serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-  --gantari: "Gantari", -apple-system, BlinkMacSystemFont, "Avenir Next", "Avenir", "Segoe UI", "Helvetica Neue", "Adwaita Sans"," Cantarell", 'Ubuntu', "Roboto", "Noto", "Helvetica", "Arial", sans-serif; 
-  --playpen: "Playpen Sans", -apple-system, BlinkMacSystemFont, "Avenir Next", "Avenir", "Segoe UI", "Helvetica Neue", "Adwaita Sans"," Cantarell", 'Ubuntu', "Roboto", "Noto", "Helvetica", "Arial", sans-serif; 
-  --google-code: "Google Sans Code", Menlo, Consolas, Monaco, Adwaita Mono, "Liberation Mono", "Lucida Console", monospace;
+  --epilogue: "Epilogue", -apple-system, BlinkMacSystemFont, "Avenir Next", "Avenir", "Segoe UI", "Helvetica Neue", "Adwaita Sans"," Cantarell", 'Ubuntu', "Roboto", "Noto", "Helvetica", "Arial", sans-serif;
 
   /* Colours */
   --orange-cream: rgba(246, 223, 208, 1);
@@ -22,7 +17,6 @@ html, body {
 
 * {
   box-sizing: border-box;
-  font-family: var(--newsreader);
 }
 
 body {
@@ -31,8 +25,36 @@ body {
   display: flex;
 }
 
+.font-epilogue {
+  font-family: var(--epilogue);
+}
+
+.font-noto-mono {
+  font-family: "Noto Sans Mono", Menlo, Consolas, Monaco, "Adwaita Mono", "Liberation Mono", "Lucida Console", monospace;
+}
+
+.font-newsreader {
+  font-family: "Newsreader", 'Iowan Old Style', 'Apple Garamond', Baskerville, 'Times New Roman',' Droid Serif', Times, 'Source Serif Pro', serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+}
+
+.font-gantari {
+  font-family: "Gantari", -apple-system, BlinkMacSystemFont, "Avenir Next", "Avenir", "Segoe UI", "Helvetica Neue", "Adwaita Sans"," Cantarell", 'Ubuntu', "Roboto", "Noto", "Helvetica", "Arial", sans-serif;
+}
+
+.font-playpen {
+  font-family: "Playpen Sans", -apple-system, BlinkMacSystemFont, "Avenir Next", "Avenir", "Segoe UI", "Helvetica Neue", "Adwaita Sans"," Cantarell", 'Ubuntu', "Roboto", "Noto", "Helvetica", "Arial", sans-serif;
+}
+
+.font-google-code {
+  font-family: "Google Sans Code", Menlo, Consolas, Monaco, "Adwaita Mono", "Liberation Mono", "Lucida Console", monospace;
+}
+
 * button {
   app-region: no-drag;
+}
+
+button, p {
+  font-family: inherit;
 }
 
 main {
@@ -261,7 +283,7 @@ title-bar {
   }
 }
 
-#unsynced-msg {
+#info-msg {
   font-size: 0.4em;
   display: none;
   text-align: center;
@@ -276,12 +298,29 @@ title-bar {
 }
  
 #playback-controls {
-  display: flex;
+  display: none;  /* CHANGE BACK TO FLEX */
   flex-wrap: nowrap;
   justify-content: center;
   gap: 16px;
   width: fit-content;
   margin: 0 auto;
+}
+
+#font-controls {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.font-btn {
+  font-size: 0.6em;
+  background-color: transparent;
+  border: 0;
+  height: 20px;
+  color: white;
+}
+
+.font-btn:hover {
+  text-decoration: underline;
 }
 
 .playback-btn {
