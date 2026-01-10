@@ -17,6 +17,7 @@ const lyricPrev = document.getElementById('lyric-prev');
 const lyricMain = document.getElementById('lyric-main');
 const lyricNext = document.getElementById('lyric-next');
 const infoMsg = document.getElementById('info-msg');
+let isUnsynced = false;
 
 // Playback controls logic
 let isPlaying = false;
@@ -34,9 +35,16 @@ let playbackProgressMs = 0;  // Overall playback progress
 let trackDurationMs = 0;     // Track duration
 let progressId = null;
 
+// Controls bar (font, theme, playback)
+const controls = {
+  'font': document.getElementById('font-controls'),
+  'playback': document.getElementById('playback-controls'),
+};
+
 const fontClasses = [];
 Object.keys(FONTS).forEach(f => fontClasses.push(`font-${f}`));
 let currentFont = window.localStorage.getItem('font') || 'epilogue';
+let isEditingFont = false;
 
 const main = async () => {
   setFont(currentFont);
@@ -119,7 +127,14 @@ const main = async () => {
 
   const editFontBtn = document.getElementById('edit-font');
   editFontBtn.addEventListener('click', () => {
-    showSelectedFont();
+    isEditingFont = !isEditingFont;
+    if (isEditingFont) {
+      displayControls('font');
+      showSelectedFont();
+    } else {
+      displayControls('playback');
+      resetInfo();
+    }
   });
 };
 
@@ -148,21 +163,22 @@ const displayLyrics = async () => {
     // On track change
     if (trackName !== previousTrack) {
       lyrics = await window.spotify.getLyrics(trackId);
-      hideInfo();
       if (lyrics) {
         // If lyrics are unsynced, distribute lyrics equally
-        if (lyrics['lyrics']['syncType'] === 'UNSYNCED') {
+        isUnsynced = (lyrics['lyrics']['syncType'] === 'UNSYNCED');
+        if (isUnsynced) {
           startTimes = [];
           const len = lyrics['lyrics']['lines'].length;
           const step = Math.floor(state['item']['duration_ms'] / len);
           for (let i = 0; i < len; i++) {
             startTimes.push(i * step);
           }
-          showInfo("Lyrics aren't synced to the song yet.");
+          if (!isEditingFont) showInfo("Lyrics aren't synced to the song yet.");
         } else {
           startTimes = lyrics['lyrics']['lines'].map(line => line['startTimeMs']);
         }
       }
+      resetInfo();  
       // e.g. "Now playing: Slippery People - Talking Heads";
       songInfo.textContent = `${trackName} - ${artists.join(', ')}`;
       clampSongWidth();
@@ -243,10 +259,10 @@ const clampSongWidth = () => {
 
 const showInfo = (msg, fade=false) => {
   infoMsg.textContent = msg;
-  infoMsg.style.visibility = 'visible';
   if (fade) {
     infoMsg.classList.remove('fade-out');
 
+    // Force repaint
     requestAnimationFrame(() => {
       infoMsg.classList.add('fade-out');
     });
@@ -257,8 +273,10 @@ const showInfo = (msg, fade=false) => {
   }
 }
 
-const hideInfo = () => {
-  infoMsg.style.visibility = 'hidden';
+const resetInfo = () => { 
+  // Don't show unsynced message if user is in editing mode
+  if (isEditingFont) return;
+  showInfo(isUnsynced ? "Lyrics aren't synced to the track yet." : "");
 }
 
 // Get user's Spotify subscription
@@ -314,6 +332,13 @@ const startProgress = () => {
 
 const stopProgress = () => cancelAnimationFrame(progressId);
 
+const displayControls = (control) => {
+  Object.keys(controls).forEach(c => {
+    controls[c].style.display = 'none';
+  });
+  controls[control].style.display = 'flex';
+};
+
 const createFontButtons = () => {
   const fontBar = document.getElementById('font-controls');
   Object.keys(FONTS).forEach(f => {
@@ -321,8 +346,14 @@ const createFontButtons = () => {
     fontBtn.textContent = 'Aa';
     fontBtn.classList.add('font-btn', `font-${f}`);
     fontBtn.title = FONTS[f]['family'];
+    fontBtn.id = f;
+    if (currentFont && f === currentFont) {
+      fontBtn.classList.add('underline');  // Indicate currently selected font
+    }
     fontBtn.addEventListener('click', () => {
       if (f !== currentFont) {
+        document.getElementById(currentFont).classList.remove('underline');
+        fontBtn.classList.add('underline');
         setFont(f);
         showInfo('Font change applied !', true);
         setTimeout(showSelectedFont, 2000);
@@ -348,6 +379,7 @@ const setFont = (fontId) => {
 };
 
 const showSelectedFont = (font=currentFont) => {
+  if (!isEditingFont) return;
   showInfo(`Selected font: ${FONTS[font]['family']}`);
 }
 

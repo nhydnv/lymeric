@@ -192,11 +192,11 @@ title-bar {
 }
 
 #settings-bar button:hover {
-  opacity: 0.8;
+  opacity: 0.6;
 }
 
 #lyrics {
-  flex: 0 1 45%;
+  flex: 0.5 1 45%;
   max-width: 100%;
   display: flex;
   flex-direction: column;
@@ -223,6 +223,7 @@ title-bar {
   word-wrap: break-word;
   max-height: 2.2em;
   overflow: hidden;
+  line-height: 1.05;
 }
 
 @keyframes scroll-x {
@@ -261,15 +262,15 @@ title-bar {
   }
 }
 
-#info-msg {
+/* Make sure the following two selectors have the same specificity */
+#home-page #info-msg {
   font-size: 0.4em;
-  visibility: hidden;
   text-align: center;
   margin-top: 5px;
   opacity: 1;
 }
 
-#info-msg.fade-out {
+#home-page #info-msg.fade-out {
   transition: opacity 2s;
   opacity: 0;
 }
@@ -282,7 +283,7 @@ title-bar {
 }
  
 #playback-controls {
-  display: none;  /* CHANGE BACK TO FLEX */
+  display: flex; 
   flex-wrap: nowrap;
   justify-content: center;
   gap: 16px;
@@ -292,7 +293,7 @@ title-bar {
 
 #font-controls {
   padding: 0 20px;
-  display: flex;
+  display: none;
   flex-wrap: nowrap;
   justify-content: space-around;
 }
@@ -306,7 +307,7 @@ title-bar {
   padding: 0 5px;
 }
 
-.font-btn:hover {
+.font-btn:hover, .underline {
   text-decoration: underline;
 }
 
