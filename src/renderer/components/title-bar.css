@@ -1,0 +1,33 @@
+.title-bar {
+  height: fit-content;
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px;
+  position: var(--title-bar-position);
+  top: var(--title-bar-top);
+  right: var(--title-bar-right);
+  button {
+    height: 20px;
+    font-size: 0.7em;
+    font-weight: 900;
+    margin-left: 5px;
+    width: 20px;
+    padding: 2px;
+    app-region: no-drag;
+  }
+}
+
+.title-bar #min {
+  font-size: 0.8em;
+} 
+
+button {
+  background-color: var(--btn-bg);
+  border: var(--btn-border);
+  color: var(--btn-color);
+}
+
+button:hover {
+  background-color: var(--btn-hover-bg);
+  color: var(--btn-hover-color);
+}

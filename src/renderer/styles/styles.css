@@ -2,7 +2,7 @@
 
 :root {
   /* Fonts */
-  --epilogue: "Epilogue", -apple-system, BlinkMacSystemFont, "Avenir Next", "Avenir", "Segoe UI", "Helvetica Neue", "Adwaita Sans"," Cantarell", 'Ubuntu', "Roboto", "Noto", "Helvetica", "Arial", sans-serif;
+  --default-font: "Epilogue", "-apple-system", "BlinkMacSystemFont", "Avenir Next", "Avenir", "Segoe UI", "Helvetica Neue", "Adwaita Sans"," Cantarell", 'Ubuntu', "Roboto", "Noto", "Helvetica", "Arial", "sans-serif";
 
   /* Colours */
   --orange-cream: rgba(246, 223, 208, 1);
@@ -55,25 +55,6 @@ title-bar {
   display: block;
 }
 
-.title-bar {
-  height: fit-content;
-  display: flex;
-  justify-content: flex-end;
-  padding: 8px;
-  button {
-    height: 20px;
-    font-size: 0.7em;
-    font-weight: 900;
-    margin-left: 5px;
-    width: 20px;
-    padding: 2px;
-  }
-}
-
-.title-bar #min {
-  font-size: 0.8em;
-}
-
 /* Bottom border growing from left to right animation */
 .underline-animation {
   position: relative;
@@ -93,6 +74,7 @@ title-bar {
 
 /* ---------- Login page ---------- */
 #login-page {
+  font-family: var(--default-font);
   display: grid;
   grid-template-rows: 1fr 4fr;
   justify-items: center;
@@ -116,15 +98,13 @@ title-bar {
   bottom: 35px;
 }
 
-#login-page .title-bar button {
-  background-color: transparent;
-  border: 0;
-  color: var(--muted-pink);
-}
-
-#login-page .title-bar button:hover {
-  background-color: var(--muted-pink);
-  color: var(--muted-red);
+/* Styling the button inside shadow DOM */
+#login-page title-bar {
+  --btn-bg: transparent;
+  --btn-border: 0;
+  --btn-color: var(--muted-pink);
+  --btn-hover-bg: var(--muted-pink);
+  --btn-hover-color: var(--muted-red); 
 }
 
 #login-btn {
@@ -154,7 +134,11 @@ title-bar {
 
 /* ---------- Home page ---------- */
 #home-page {
-  background-color: rgb(25, 25, 25);
+  --font: var(--default-font);
+  --theme-text: white;
+  --theme-background: rgb(25, 25, 25);
+  font-family: var(--font);
+  background-color: var(--theme-background);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -162,7 +146,7 @@ title-bar {
   overflow: hidden;
   p {
     margin: 0 20px;
-    color: white;
+    color: var(--theme-text);
     max-width: 100%;
   }
 }
@@ -322,8 +306,11 @@ title-bar {
 }
 
 /* Glow on hover effect */
-.playback-btn:not(:disabled) svg:hover {
-  filter: drop-shadow(0 0 3px #ffffff);
+.playback-btn:not(:disabled) {
+  --hover-effect: drop-shadow(0 0 3px #ffffff);
+  svg:hover {
+    filter: var(--hover-effect);
+  }
 }
 
 #home-page title-bar {
@@ -331,17 +318,11 @@ title-bar {
   top: 0;
   right: 0;
   width: fit-content;
-}
-
-#home-page .title-bar button {
-  background-color: transparent;
-  color: rgb(160, 160, 160);
-  border: 0;
-}
-
-#home-page .title-bar button:hover {
-  background-color: rgba(0, 0, 0, 0.5);
-  color: white;
+  --btn-bg: transparent;
+  --btn-color: rgb(160, 160, 160);
+  --btn-border: 0;
+  --btn-hover-bg: rgba(0, 0, 0, 0.5);
+  --btn-hover-color: white;
 }
 
 #home-page #progress-bar {
@@ -352,6 +333,7 @@ title-bar {
 
 /* ---------- Error page ---------- */
 #error-page {
+  font-family: var(--default-font);
   position: relative;  /* Create positioning context */
 }
 
@@ -403,19 +385,13 @@ for some fuckass reason so the bg img is embedded as HTML */
   color: white;
 }
 
-#error-page .title-bar {
-  position: relative;
-  top: 0;
-  right: 0;
-}
-
-#error-page .title-bar button {
-  background-color: transparent;
-  border: 0;
-  color: white;
-}
-
-#error-page .title-bar button:hover {
-  background-color: var(--dark-cool-purple);
-  color: rgb(185, 185, 185);
+#error-page title-bar {
+  --btn-bg: transparent;
+  --btn-border: 0;
+  --btn-color: white;
+  --btn-hover-bg: var(--dark-cool-purple);
+  --btn-hover-color: rgb(185, 185, 185);
+  --title-bar-position: relative;
+  --title-bar-top: 0;
+  --title-bar-right: 0;
 }

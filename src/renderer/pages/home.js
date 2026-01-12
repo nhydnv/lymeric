@@ -1,6 +1,7 @@
 import { currentToken } from './../authorization.js';
 import { navigateTo } from '../router.js';
 import { FONTS } from '../styles/fonts.js';
+import { THEMES } from '../styles/themes.js';
 
 const homePage = document.getElementById('home-page');
 
@@ -38,17 +39,18 @@ let progressId = null;
 // Controls bar (font, theme, playback)
 const controls = {
   'font': document.getElementById('font-controls'),
+  'theme': document.getElementById('theme-controls'),
   'playback': document.getElementById('playback-controls'),
 };
 
-const fontClasses = [];
-Object.keys(FONTS).forEach(f => fontClasses.push(`font-${f}`));
 let currentFont = window.localStorage.getItem('font') || 'epilogue';
 let isEditingFont = false;
 
+let currentTheme = window.localStorage.getItem('theme') || 'dark';
+
 const main = async () => {
-  setFont(currentFont);
   createFontButtons();
+  createThemeButtons();
 
   if (!currentToken.access_token) { 
     fail();
@@ -340,7 +342,7 @@ const displayControls = (control) => {
 };
 
 const createFontButtons = () => {
-  const fontBar = document.getElementById('font-controls');
+  const fontBar = controls['font'];
   Object.keys(FONTS).forEach(f => {
     const fontBtn = document.createElement('button');
     fontBtn.textContent = 'Aa';
@@ -373,14 +375,41 @@ const createFontButtons = () => {
   });
 };
 
-const setFont = (fontId) => {
-  homePage.classList.remove(...fontClasses);
-  homePage.classList.add(`font-${fontId}`);
+const setFont = (font) => {
+  // Transform to a CSS-syntax font stack first
+  const fontStack = FONTS[font]['family'].map(f => `"${f}"`).join(', ');
+  homePage.style.setProperty('--font', fontStack);
 };
 
 const showSelectedFont = (font=currentFont) => {
   if (!isEditingFont) return;
-  showInfo(`Selected font: ${FONTS[font]['family']}`);
+  showInfo(`Selected font: ${FONTS[font]['name']}`);
+}
+
+const createThemeButtons = () => {
+  const themeBar = controls['theme'];
+  Object.keys(THEMES).forEach(t => {
+    const themeBtn = document.createElement('button');
+
+    const themeIcon = document.createElement('theme-button');
+    themeIcon.setColor(t['background']);
+    themeBtn.appendChild(themeIcon);
+
+    themeBtn.classList.add('theme-btn');
+    themeBtn.title = t['name'];
+    themeBtn.id = t;
+
+    themeBtn.addEventListener('click', () => {
+      setTheme(t);
+    });
+
+    themeBar.appendChild(themeBtn);
+  });
+}
+
+const setTheme = (theme) => {
+  homePage.style.setProperty('--theme-text', theme['text']);
+  homePage.style.setPropertY('--theme-background', theme['background']);
 }
 
 const invoke = async (promise) => {
@@ -407,6 +436,9 @@ const fail = () => {
   playbackBtns.forEach(btn => {
     // Remove all event listeners by cloning the nodes
     btn.replaceWith(btn.cloneNode(true)); 
+  });
+  document.querySelectorAll('.font-btn').forEach(btn => {
+    btn.replaceWith(btn.closeNode(true));
   });
 }
 

@@ -1,0 +1,3 @@
+svg:hover {
+  filter: var(--hover-effect);
+}
