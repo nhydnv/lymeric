@@ -1,52 +1,68 @@
+const theme = (name, textPrimary, textSecondary, background) => ({
+  name,
+  'text-primary': textPrimary,
+  'text-secondary': textSecondary,
+  background,
+});
+
 export const THEMES = {
-  dark: {
-    name: 'Dark',
-    text: 'white',
-    background: '#191919',
-  },
-  light: {
-    name: 'Light',
-    text: '#191919',
-    background: 'white',
-  },
-  cafe: {
-    name: 'Cafe',
-    text: '#ffe8bf',
-    background: '#1c0904', 
-  },
-  olive: {
-    name: 'Olive',
-    text: '#bcc71e',
-    background: '#330312',
-  },
-  alarm: {
-    name: 'Alarm',
-    text: '#00096e',
-    background: '#ff5640',
-  },
-  blueberry: {
-    name: 'Blueberry pie',
-    text: '#0d3b66',
-    background: '#faf0ca',
-  },
-  perfume: {
-    name: 'Perfume',
-    text: '#66023c',
-    background: '#cad183', 
-  },
-  berry: {
-    name: 'Berry',
-    text: '#70020f',
-    background: '#ffdee2',
-  },
-  lavender: {
-    name: 'Lavender',
-    text: '#f8f4ff',
-    background: '#a599c9',
-  },
-  special: {
-    name: '',
-    text: 'transparent',
-    background: 'transparent',
-  }
-};
+  dark: theme(
+    'Dark', 
+    'white', 
+    '#a0a0a0', 
+    '#191919'
+  ),
+  light: theme(
+    'Light', 
+    '#191919', 
+    '#797979', 
+    'white'
+  ),
+  cafe: theme(
+    'Cafe',
+    '#ffe8bf', 
+    '#cd925e', 
+    '#1c0904'),
+  olive: theme(
+    'Olive',
+    '#cbd628',
+    '#957a29',
+    '#330312'
+  ),
+  alarm: theme(
+    'Alarm',
+    '#ff5640',
+    '#ae200d',
+    '#0a104fff',
+  ),
+  blueberry: theme(
+    'Blueberry cheesecake',
+    '#0d3b66',
+    '#356c9f',
+    '#faf0ca',
+  ),
+  perfume: theme(
+    'Perfume',
+    '#66023c',
+    '#91386c',
+    '#cad183',
+  ),
+  berry: theme(
+    'Berry',
+    '#70020f',
+    '#b73241',
+    '#ffdee2',
+  ),
+  lavender: theme(
+    'Lavender',
+    '#f8f4ff',
+    '#d9c8f5ff',
+    '#a599c9',
+  ),
+  special: theme(
+    '',
+    'transparent',
+    'transparent',
+    'transparent',
+  ),
+}

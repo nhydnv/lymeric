@@ -38,14 +38,25 @@ let progressId = null;
 
 // Controls bar (font, theme, playback)
 const controls = {
-  'font': document.getElementById('font-controls'),
-  'theme': document.getElementById('theme-controls'),
-  'playback': document.getElementById('playback-controls'),
+  font: {
+    element: document.getElementById('font-controls'),
+    bits: 1 << 0,
+  },
+  theme: {
+    element: document.getElementById('theme-controls'),
+    bits: 1 << 1,
+  },
+  playback: {
+    element: document.getElementById('playback-controls'),
+    bits: 1 << 2,
+  }
 };
 
-let currentFont = window.localStorage.getItem('font') || 'epilogue';
-let isEditingFont = false;
+// Bit flag indicating which control mode user is in
+let isEditing = 0;
+isEditing |= controls.playback.bits;  // User is in playback controls at page load
 
+let currentFont = window.localStorage.getItem('font') || 'epilogue';
 let currentTheme = window.localStorage.getItem('theme') || 'dark';
 
 const main = async () => {
@@ -127,17 +138,22 @@ const main = async () => {
     await invoke(window.api.seekToPosition(currentToken.access_token, pos));
   });
 
-  const editFontBtn = document.getElementById('edit-font');
-  editFontBtn.addEventListener('click', () => {
-    isEditingFont = !isEditingFont;
-    if (isEditingFont) {
-      displayControls('font');
-      showSelectedFont();
+  const editBtns = document.querySelectorAll('.edit-btn');
+  editBtns.forEach(btn => btn.addEventListener('click', () => {
+    // e.g. 'theme' from 'edit-theme'
+    const controlType = btn.id.slice(5);
+
+    // Toggle the corresponding bit, set all other bits to 0
+    isEditing ^= controls[controlType].bits;  // Toggle bit
+    isEditing &= controls[controlType].bits;  // Set all other bits to 0
+    if (isEditing & controls[controlType].bits) {
+      displayControls(controlType);
+      showSelected(controlType);
     } else {
       displayControls('playback');
       resetInfo();
     }
-  });
+  }));
 };
 
 const displayLyrics = async () => {  
@@ -175,7 +191,7 @@ const displayLyrics = async () => {
           for (let i = 0; i < len; i++) {
             startTimes.push(i * step);
           }
-          if (!isEditingFont) showInfo("Lyrics aren't synced to the song yet.");
+          if (!(isEditing & controls.font.bits)) showInfo("Lyrics aren't synced to the song yet.");
         } else {
           startTimes = lyrics['lyrics']['lines'].map(line => line['startTimeMs']);
         }
@@ -277,7 +293,7 @@ const showInfo = (msg, fade=false) => {
 
 const resetInfo = () => { 
   // Don't show unsynced message if user is in editing mode
-  if (isEditingFont) return;
+  if (isEditing & controls.font.bits) return;
   showInfo(isUnsynced ? "Lyrics aren't synced to the track yet." : "");
 }
 
@@ -336,13 +352,13 @@ const stopProgress = () => cancelAnimationFrame(progressId);
 
 const displayControls = (control) => {
   Object.keys(controls).forEach(c => {
-    controls[c].style.display = 'none';
+    controls[c]['element'].style.display = 'none';
   });
-  controls[control].style.display = 'flex';
+  controls[control]['element'].style.display = 'flex';
 };
 
 const createFontButtons = () => {
-  const fontBar = controls['font'];
+  const fontBar = controls['font']['element'];
   Object.keys(FONTS).forEach(f => {
     const fontBtn = document.createElement('button');
     fontBtn.textContent = 'Aa';
@@ -358,36 +374,43 @@ const createFontButtons = () => {
         fontBtn.classList.add('underline');
         setFont(f);
         showInfo('Font change applied !', true);
-        setTimeout(showSelectedFont, 2000);
+        setTimeout(() => showSelected('font'), 2000);
       }
       window.localStorage.setItem('font', f);
       currentFont = f;
     });
     fontBtn.addEventListener('mouseenter', () => {
-      showSelectedFont(f);
+      showSelected('font', f);
       setFont(f);
     });
     fontBtn.addEventListener('mouseleave', () => {
-      showSelectedFont();
+      showSelected('font');
       setFont(currentFont);
     });
     fontBar.appendChild(fontBtn);
   });
 };
 
-const setFont = (font) => {
+const setFont = (fontId) => {
   // Transform to a CSS-syntax font stack first
-  const fontStack = FONTS[font]['family'].map(f => `"${f}"`).join(', ');
+  const fontStack = FONTS[fontId]['family'].map(f => `"${f}"`).join(', ');
   homePage.style.setProperty('--font', fontStack);
 };
 
-const showSelectedFont = (font=currentFont) => {
-  if (!isEditingFont) return;
-  showInfo(`Selected font: ${FONTS[font]['name']}`);
+const showSelected = (type, data) => {
+  // Do not show selected info if user is not in editing mode
+  if (!(isEditing & controls[type].bits)) return;
+  if (type === 'font') {
+    if (!data) data = currentFont;
+    showInfo(`Selected font: ${FONTS[data]['name']}`);
+  } else if (type === 'theme') {
+    if (!data) data = currentTheme;
+    showInfo(`Selected theme: ${THEMES[data]['name']}`);
+  }
 }
 
 const createThemeButtons = () => {
-  const themeBar = controls['theme'];
+  const themeBar = controls['theme']['element'];
   Object.keys(THEMES).forEach(t => {
     const themeBtn = document.createElement('button');
 
@@ -396,7 +419,7 @@ const createThemeButtons = () => {
     themeBtn.appendChild(themeIcon);
 
     themeBtn.classList.add('theme-btn');
-    themeBtn.title = t['name'];
+    themeBtn.title = THEMES[t].name;
     themeBtn.id = t;
 
     themeBtn.addEventListener('click', () => {
@@ -407,9 +430,10 @@ const createThemeButtons = () => {
   });
 }
 
-const setTheme = (theme) => {
-  homePage.style.setProperty('--theme-text', theme['text']);
-  homePage.style.setPropertY('--theme-background', theme['background']);
+const setTheme = (themeId) => {
+  homePage.style.setProperty('--theme-text-primary', THEMES[themeId]['text-primary']);
+  homePage.style.setProperty('--theme-text-secondary', THEMES[themeId]['text-secondary']);
+  homePage.style.setProperty('--theme-background', THEMES[themeId].background);
 }
 
 const invoke = async (promise) => {
