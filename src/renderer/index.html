@@ -5,9 +5,12 @@
     <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; 
-      connect-src https://accounts.spotify.com/api/
-      https://api.spotify.com/v1/"
+      content="default-src 'self'; 
+               script-src  'self'; 
+               connect-src https://accounts.spotify.com/api/
+                           https://api.spotify.com/v1/;
+               img-src     'self'
+                           https://i.scdn.co/image/"
     />
     <meta
       http-equiv="X-Content-Security-Policy"

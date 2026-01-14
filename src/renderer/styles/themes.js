@@ -18,8 +18,8 @@ export const THEMES = {
     '#797979', 
     'white'
   ),
-  cafe: theme(
-    'Cafe',
+  rocky: theme(
+    'Rocky Road',
     '#ffe8bf', 
     '#cd925e', 
     '#1c0904'),
@@ -29,23 +29,23 @@ export const THEMES = {
     '#957a29',
     '#330312'
   ),
-  alarm: theme(
-    'Alarm',
-    '#ff5640',
-    '#ae200d',
-    '#0a104fff',
+  strawberry: theme(
+    'Strawberry Daiquiri',
+    '#ed254b',
+    '#bf0c2d',
+    '#011936',
   ),
   blueberry: theme(
-    'Blueberry cheesecake',
+    'Blueberry Cheesecake',
     '#0d3b66',
     '#356c9f',
     '#faf0ca',
   ),
-  perfume: theme(
-    'Perfume',
-    '#66023c',
-    '#91386c',
-    '#cad183',
+  pine: theme(
+    'Pines',
+    '#f9eed0',
+    '#d4d1a0',
+    '#1d6c5c',
   ),
   berry: theme(
     'Berry',
@@ -59,10 +59,10 @@ export const THEMES = {
     '#d9c8f5ff',
     '#a599c9',
   ),
-  special: theme(
-    '',
-    'transparent',
-    'transparent',
-    'transparent',
+  album: theme(
+    'Album Cover',
+    'white',
+    '#ffffffcc',
+    'white',
   ),
 }

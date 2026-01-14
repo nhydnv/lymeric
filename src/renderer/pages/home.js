@@ -41,10 +41,12 @@ const controls = {
   font: {
     element: document.getElementById('font-controls'),
     bits: 1 << 0,
+    selected: window.localStorage.getItem('font') || 'epilogue', 
   },
   theme: {
     element: document.getElementById('theme-controls'),
     bits: 1 << 1,
+    selected: window.localStorage.getItem('theme') || 'dark',
   },
   playback: {
     element: document.getElementById('playback-controls'),
@@ -56,10 +58,10 @@ const controls = {
 let isEditing = 0;
 isEditing |= controls.playback.bits;  // User is in playback controls at page load
 
-let currentFont = window.localStorage.getItem('font') || 'epilogue';
-let currentTheme = window.localStorage.getItem('theme') || 'dark';
-
 const main = async () => {
+  setFont(controls['font']['selected']);
+  setTheme(controls['theme']['selected']);
+
   createFontButtons();
   createThemeButtons();
 
@@ -180,6 +182,7 @@ const displayLyrics = async () => {
 
     // On track change
     if (trackName !== previousTrack) {
+      if (controls['theme']['selected'] === 'album') setTheme('album');
       lyrics = await window.spotify.getLyrics(trackId);
       if (lyrics) {
         // If lyrics are unsynced, distribute lyrics equally
@@ -191,7 +194,6 @@ const displayLyrics = async () => {
           for (let i = 0; i < len; i++) {
             startTimes.push(i * step);
           }
-          if (!(isEditing & controls.font.bits)) showInfo("Lyrics aren't synced to the song yet.");
         } else {
           startTimes = lyrics['lyrics']['lines'].map(line => line['startTimeMs']);
         }
@@ -292,8 +294,13 @@ const showInfo = (msg, fade=false) => {
 }
 
 const resetInfo = () => { 
-  // Don't show unsynced message if user is in editing mode
-  if (isEditing & controls.font.bits) return;
+  // Check which editing mode user is in and show currently selected option for that mode
+  for (const c of Object.keys(controls)) {
+    if (isEditing & controls[c].bits) {
+      showSelected(c);
+      return;
+    }
+  }
   showInfo(isUnsynced ? "Lyrics aren't synced to the track yet." : "");
 }
 
@@ -365,19 +372,19 @@ const createFontButtons = () => {
     fontBtn.classList.add('font-btn', `font-${f}`);
     fontBtn.title = FONTS[f]['family'];
     fontBtn.id = f;
-    if (currentFont && f === currentFont) {
+    if (f === controls['font']['selected']) {
       fontBtn.classList.add('underline');  // Indicate currently selected font
     }
     fontBtn.addEventListener('click', () => {
-      if (f !== currentFont) {
-        document.getElementById(currentFont).classList.remove('underline');
+      if (f !== controls['font']['selected']) {
+        document.getElementById(controls['font']['selected']).classList.remove('underline');
         fontBtn.classList.add('underline');
         setFont(f);
         showInfo('Font change applied !', true);
         setTimeout(() => showSelected('font'), 2000);
       }
       window.localStorage.setItem('font', f);
-      currentFont = f;
+      controls['font']['selected'] = f;
     });
     fontBtn.addEventListener('mouseenter', () => {
       showSelected('font', f);
@@ -385,7 +392,7 @@ const createFontButtons = () => {
     });
     fontBtn.addEventListener('mouseleave', () => {
       showSelected('font');
-      setFont(currentFont);
+      setFont(controls['font']['selected']);
     });
     fontBar.appendChild(fontBtn);
   });
@@ -397,15 +404,14 @@ const setFont = (fontId) => {
   homePage.style.setProperty('--font', fontStack);
 };
 
-const showSelected = (type, data) => {
+const showSelected = (type, selected) => {
   // Do not show selected info if user is not in editing mode
-  if (!(isEditing & controls[type].bits)) return;
+  if (!(isEditing & controls[type].bits) || type === 'playback') return;
+  if (!selected) selected = controls[type]['selected'];
   if (type === 'font') {
-    if (!data) data = currentFont;
-    showInfo(`Selected font: ${FONTS[data]['name']}`);
+    showInfo(`Selected font: ${FONTS[selected]['name']}`);
   } else if (type === 'theme') {
-    if (!data) data = currentTheme;
-    showInfo(`Selected theme: ${THEMES[data]['name']}`);
+    showInfo(`Selected theme: ${THEMES[selected]['name']}`);
   }
 }
 
@@ -415,7 +421,8 @@ const createThemeButtons = () => {
     const themeBtn = document.createElement('button');
 
     const themeIcon = document.createElement('theme-button');
-    themeIcon.setColor(t['background']);
+    themeIcon.setFill(THEMES[t]['background']);
+    themeIcon.setStroke(THEMES[t]['text-primary']);
     themeBtn.appendChild(themeIcon);
 
     themeBtn.classList.add('theme-btn');
@@ -424,16 +431,40 @@ const createThemeButtons = () => {
 
     themeBtn.addEventListener('click', () => {
       setTheme(t);
+      window.localStorage.setItem('theme', t);
+      controls['theme']['selected'] = t;
+      showSelected('theme');
     });
 
     themeBar.appendChild(themeBtn);
   });
 }
 
-const setTheme = (themeId) => {
+const setTheme = async (themeId) => {
   homePage.style.setProperty('--theme-text-primary', THEMES[themeId]['text-primary']);
   homePage.style.setProperty('--theme-text-secondary', THEMES[themeId]['text-secondary']);
-  homePage.style.setProperty('--theme-background', THEMES[themeId].background);
+
+  // Make the edit theme button match the currently selected theme
+  const editThemeIcon = document.querySelector('theme-button');
+  editThemeIcon.setFill(THEMES[themeId]['background']);
+  editThemeIcon.setStroke(THEMES[themeId]['text-primary']);
+
+  // Album theme sets the background image to the album's cover art
+  if (themeId === 'album') {
+    const response = await invoke(window.api.getPlaybackState(currentToken.access_token));
+    if (!response) return;
+    const state = response['data'];
+    if (!state) setTheme('dark');
+    const imageUrl = state['item']['album']['images'][0]['url'];
+    homePage.style.setProperty('--theme-background-image', `url(${imageUrl})`);
+
+    // Text shadow to make lyrics more readable with the background image
+    document.getElementById('overlay').style.visibility = 'visible';
+    return;
+  }
+  homePage.style.setProperty('--theme-background-image', 'none');
+  homePage.style.setProperty('--theme-background-color', THEMES[themeId].background);
+  document.getElementById('overlay').style.visibility = 'hidden';  // Hide text shadow
 }
 
 const invoke = async (promise) => {

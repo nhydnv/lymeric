@@ -70,7 +70,7 @@ class PauseButton extends HTMLElement {
 }
 
 class ThemeButton extends HTMLElement {
-  static observedAttributes = ['color'];
+  static observedAttributes = ['fill', 'stroke'];
 
   constructor() {
     super();
@@ -86,15 +86,20 @@ class ThemeButton extends HTMLElement {
     this.render();
   }
 
-  setColor(color) {
-    this.setAttribute('color', color);
+  setFill(color) {
+    this.setAttribute('fill', color);
+  }
+
+  setStroke(color) {
+    this.setAttribute('stroke', color);
   }
 
   render() {
-    const color = this.getAttribute('color') || 'black';
+    const fill = this.getAttribute('fill') || 'black';
+    const stroke = this.getAttribute('stroke') || 'white';
     this.shadowRoot.innerHTML = `
       <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="5" cy="5" r="4.5" fill="${color}" stroke="white"/>
+        <circle cx="5" cy="5" r="4.5" fill="${fill}" stroke="${stroke}"/>
       </svg>
     `;
   }
