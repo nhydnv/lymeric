@@ -67,6 +67,7 @@ isEditing |= controls.playback.bits;  // User is in playback controls at page lo
 const main = async () => {
   setFont(getSelected('font'));
   setTheme(getSelected('theme'));
+  setOpacity(getSelected('opacity'));
 
   createFontButtons();
   createThemeButtons();
@@ -172,10 +173,8 @@ const main = async () => {
 
   // Opacity slider
   opacitySlider.addEventListener('input', () => {
-    document.documentElement.style.setProperty(
-      '--background-opacity', Number(opacitySlider.value) / 100);
+    setOpacity(Number(opacitySlider.value) / 100);
     showSelected('opacity');
-    setSelected('opacity', opacitySlider.value);
   });
 };
 
@@ -435,11 +434,14 @@ const getSelected = (type) => {
     theme: 'dark',
     opacity: 0.9,
   };
+  if (type === 'opacity') {
+    return parseFloat(window.localStorage.getItem(type)) || defaults[type];
+  }
   return window.localStorage.getItem(type) || defaults[type];
 }
 
 const setSelected = (type, value) => {
-  return window.localStorage.setItem(type, value);
+  window.localStorage.setItem(type, value);
 }
 
 const showSelected = (type, selected) => {
@@ -517,6 +519,12 @@ const setTheme = async (themeId) => {
   homePage.style.setProperty('--theme-background-color', THEMES[themeId].background);
   document.getElementById('overlay').style.visibility = 'hidden';  // Hide text shadow
   setSelected('theme', themeId);
+}
+
+const setOpacity = (value) => {
+  document.documentElement.style.setProperty(
+    '--background-opacity', value);
+  setSelected('opacity', value);
 }
 
 const invoke = async (promise) => {
