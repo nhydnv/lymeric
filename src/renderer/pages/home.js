@@ -43,12 +43,10 @@ const controls = {
   font: {
     element: document.getElementById('font-controls'),
     bits: 1 << 0,
-    selected: window.localStorage.getItem('font') || 'epilogue', 
   },
   theme: {
     element: document.getElementById('theme-controls'),
     bits: 1 << 1,
-    selected: window.localStorage.getItem('theme') || 'dark',
   },
   opacity: {
     element: document.getElementById('opacity-controls'),
@@ -67,8 +65,8 @@ let isEditing = 0;
 isEditing |= controls.playback.bits;  // User is in playback controls at page load
 
 const main = async () => {
-  setFont(controls['font']['selected']);
-  setTheme(controls['theme']['selected']);
+  setFont(getSelected('font'));
+  setTheme(getSelected('theme'));
 
   createFontButtons();
   createThemeButtons();
@@ -177,6 +175,7 @@ const main = async () => {
     document.documentElement.style.setProperty(
       '--background-opacity', Number(opacitySlider.value) / 100);
     showSelected('opacity');
+    setSelected('opacity', opacitySlider.value);
   });
 };
 
@@ -204,7 +203,7 @@ const displayLyrics = async () => {
 
     // On track change
     if (trackName !== previousTrack) {
-      if (controls['theme']['selected'] === 'album') setTheme('album');
+      if (getSelected('theme') === 'album') setTheme('album');
       lyrics = await window.spotify.getLyrics(trackId);
       if (lyrics) {
         // If lyrics are unsynced, distribute lyrics equally
@@ -399,18 +398,17 @@ const createFontButtons = () => {
     fontBtn.classList.add('font-btn', `font-${f}`);
     fontBtn.title = FONTS[f]['family'];
     fontBtn.id = f;
-    if (f === controls['font']['selected']) {
+    if (f === getSelected('font')) {
       fontBtn.classList.add('underline');  // Indicate currently selected font
     }
     fontBtn.addEventListener('click', () => {
-      if (f !== controls['font']['selected']) {
-        document.getElementById(controls['font']['selected']).classList.remove('underline');
+      if (f !== getSelected('font')) {
+        document.getElementById(getSelected('font')).classList.remove('underline');
         fontBtn.classList.add('underline');
         setFont(f);
         showInfo('Font change applied !', true);
         setTimeout(() => showSelected('font'), 2000);
       }
-      window.localStorage.setItem('font', f);
     });
     fontBtn.addEventListener('mouseenter', () => {
       showSelected('font', f);
@@ -418,7 +416,7 @@ const createFontButtons = () => {
     });
     fontBtn.addEventListener('mouseleave', () => {
       showSelected('font');
-      setFont(controls['font']['selected']);
+      setFont(getSelected('font'));
     });
     fontBar.appendChild(fontBtn);
   });
@@ -428,13 +426,26 @@ const setFont = (fontId) => {
   // Transform to a CSS-syntax font stack first
   const fontStack = FONTS[fontId]['family'].map(f => `"${f}"`).join(', ');
   homePage.style.setProperty('--font', fontStack);
-  controls['font']['selected'] = fontId;
+  setSelected('font', fontId);
 };
+
+const getSelected = (type) => {
+  const defaults = {
+    font: 'epilogue',
+    theme: 'dark',
+    opacity: 0.9,
+  };
+  return window.localStorage.getItem(type) || defaults[type];
+}
+
+const setSelected = (type, value) => {
+  return window.localStorage.setItem(type, value);
+}
 
 const showSelected = (type, selected) => {
   // Do not show selected info if user is not in editing mode
   if (!(isEditing & controls[type].bits) || type === 'playback') return;
-  if (!selected) selected = controls[type]['selected'];
+  if (!selected) selected = getSelected(type);
   if (type === 'font') {
     showInfo(`Selected font: ${FONTS[selected]['name']}`);
   } else if (type === 'theme') {
@@ -460,7 +471,6 @@ const createThemeButtons = () => {
 
     themeBtn.addEventListener('click', () => {
       setTheme(t);
-      window.localStorage.setItem('theme', t);
       showSelected('theme');
     });
 
@@ -492,7 +502,7 @@ const setTheme = async (themeId) => {
     const state = response['data'];
     // If there is no song playing, keep the current theme or switch to default theme
     if (!state) { 
-      setTheme(controls['theme']['selected'] === 'album' ? 'dark' : controls['theme']['selected']);
+      setTheme(getSelected('theme') === 'album' ? 'dark' : getSelected('theme'));
       return;
     }
     const imageUrl = state['item']['album']['images'][0]['url'];
@@ -500,13 +510,13 @@ const setTheme = async (themeId) => {
 
     // Text shadow to make lyrics more readable with the background image
     document.getElementById('overlay').style.visibility = 'visible';
-    controls['theme']['selected'] = themeId;
+    setSelected('theme', themeId);
     return;
   }
   homePage.style.setProperty('--theme-background-image', 'none');
   homePage.style.setProperty('--theme-background-color', THEMES[themeId].background);
   document.getElementById('overlay').style.visibility = 'hidden';  // Hide text shadow
-  controls['theme']['selected'] = themeId;
+  setSelected('theme', themeId);
 }
 
 const invoke = async (promise) => {
