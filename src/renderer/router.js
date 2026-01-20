@@ -1,9 +1,9 @@
 const page = (html, js) => ({html, js});
 
 export const routes = {
-  login: page('pages/login.html', 'pages/login.js'),
-  home: page('pages/home.html', 'pages/home.js'),
-  error: page('pages/error.html', 'pages/error.js'),
+  login: page('pages/login/login.html', 'pages/login/login.js'),
+  home: page('pages/home/home.html', 'pages/home/home.js'),
+  error: page('pages/error/error.html', 'pages/error/error.js'),
 };
 
 export async function navigateTo(route, { reload = false, cache = true } = {}) {

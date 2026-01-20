@@ -1,5 +1,5 @@
-import { authorize } from '../authorization.js';
-import { navigateTo } from '../router.js';
+import { authorize } from '../../authorization.js';
+import { navigateTo } from '../../router.js';
 
 export const init = () => {
   const btn = document.getElementById("login-btn");

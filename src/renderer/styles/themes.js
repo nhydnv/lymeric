@@ -15,7 +15,7 @@ export const THEMES = {
   light: theme(
     'Light', 
     '#191919', 
-    '#797979', 
+    '#575757', 
     'white'
   ),
   rocky: theme(
@@ -31,7 +31,7 @@ export const THEMES = {
   ),
   strawberry: theme(
     'Strawberry Daiquiri',
-    '#ed254b',
+    '#ff2c53',
     '#bf0c2d',
     '#011936',
   ),

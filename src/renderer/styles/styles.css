@@ -329,7 +329,7 @@ title-bar {
   background-color: transparent;
   border: 0;
   height: 20px;
-  color: white;
+  color: var(--theme-text-primary);
   padding: 0 5px;
 }
 
@@ -386,7 +386,7 @@ title-bar {
 
 /* Glow on hover effect */
 .playback-btn:not(:disabled) {
-  --hover-effect: drop-shadow(0 0 3px #ffffff);
+  --hover-effect: drop-shadow(0 0 3px var(--theme-text-primary));
   svg:hover {
     filter: var(--hover-effect);
   }

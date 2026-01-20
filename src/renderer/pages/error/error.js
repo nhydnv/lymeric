@@ -1,4 +1,4 @@
-import { navigateTo } from '../router.js';
+import { navigateTo } from '../../router.js';
 
 export const init = () => {
   const btn = document.getElementById("return-to-login");

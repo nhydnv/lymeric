@@ -1,9 +1,15 @@
-import { currentToken } from './../authorization.js';
-import { navigateTo } from '../router.js';
-import { FONTS } from '../styles/fonts.js';
-import { THEMES } from '../styles/themes.js';
-
-const homePage = document.getElementById('home-page');
+import { currentToken } from '../../authorization.js';
+import { navigateTo } from '../../router.js';
+import { FONTS } from '../../styles/fonts.js';
+import { THEMES } from '../../styles/themes.js';
+import {
+  CONTROLS,
+  FontControl,
+  ThemeControl,
+  OpacityControl,
+  getSelected,
+  PlaybackControl,
+} from './controls.js';
 
 let halted = false;
 
@@ -36,41 +42,18 @@ let playbackProgressMs = 0;  // Overall playback progress
 let trackDurationMs = 0;     // Track duration
 let progressId = null;
 
-const logOutBtn = document.getElementById('log-out-btn');
-
-// Controls bar (font, theme, playback)
-const controls = {
-  font: {
-    element: document.getElementById('font-controls'),
-    bits: 1 << 0,
-  },
-  theme: {
-    element: document.getElementById('theme-controls'),
-    bits: 1 << 1,
-  },
-  opacity: {
-    element: document.getElementById('opacity-controls'),
-    bits: 1 << 2,
-  },
-  playback: {
-    element: document.getElementById('playback-controls'),
-    bits: 1 << 3,  // ALWAYS THE FIRST BIT
-  }
-};
-
-const opacitySlider = document.getElementById('opacity-slider');
-
-// Bit flag indicating which control mode user is in
-let isEditing = 0;
-isEditing |= controls.playback.bits;  // User is in playback controls at page load
+const controlObjs = {
+  'font': new FontControl(),
+  'theme': new ThemeControl(),
+  'opacity': new OpacityControl(),
+  'playback': new PlaybackControl(),
+}
 
 const main = async () => {
-  setFont(getSelected('font'));
-  setTheme(getSelected('theme'));
-  setOpacity(getSelected('opacity'));
-
-  createFontButtons();
-  createThemeButtons();
+  Object.keys(controlObjs).forEach(c => {
+    controlObjs[c].applySelection(getSelected(c));
+    controlObjs[c].createUI();
+  });
 
   if (!currentToken.access_token) { 
     fail();
@@ -81,7 +64,7 @@ const main = async () => {
   const sub = await getSubscription();
   if (!sub || sub !== 'premium') {
     disablePlayback();
-    hasPremium = false;``
+    hasPremium = false;
   }
 
   // Loading "animation" while Puppeteer opens the web player
@@ -147,33 +130,78 @@ const main = async () => {
     await invoke(window.api.seekToPosition(currentToken.access_token, pos));
   });
 
+  // Log out button
+  const logOutBtn = document.getElementById('log-out-btn');
+  logOutBtn.addEventListener('click', () => {
+    navigateTo('login');
+    cleanUp();
+  });
+
   // Edit buttons in the settings bar
   const editBtns = document.querySelectorAll('.edit-btn');
   editBtns.forEach(btn => btn.addEventListener('click', () => {
     // e.g. 'theme' from 'edit-theme'
     const controlType = btn.id.slice(5);
 
-    // Toggle the corresponding bit, set all other bits to 0
-    isEditing ^= controls[controlType].bits;  // Toggle bit
-    isEditing &= controls[controlType].bits;  // Set all other bits to 0
-    if (isEditing & controls[controlType].bits) {
-      displayControls(controlType);
+    // Toggle the corresponding control type, disable all other
+    Object.keys(CONTROLS).forEach(c => {
+      if (c === controlType) {
+        // Toggle
+        CONTROLS[controlType]['active'] = !CONTROLS[controlType]['active']; 
+      } else {
+        // Disable everything else
+        CONTROLS[c]['active'] = false;  
+      }
+    });
+
+    if (CONTROLS[controlType]['active']) {
+      controlObjs[controlType].display();
       showSelected(controlType);
     } else {
-      displayControls('playback');
+      controlObjs['playback'].display();
       resetInfo();
     }
   }));
 
-  // Log out button
-  logOutBtn.addEventListener('click', () => {
-    navigateTo('login');
-    cleanUp();
+
+  // Font options
+  const fontBtns = document.querySelectorAll('.font-btn');
+  fontBtns.forEach(fontBtn => {
+    const control = controlObjs['font'];
+    const f = fontBtn.id;
+    fontBtn.addEventListener('click', () => {
+      if (f !== getSelected('font')) {
+        document.getElementById(getSelected('font')).classList.remove('underline');
+        fontBtn.classList.add('underline');
+        control.applySelection(f);
+        showInfo('Font change applied !', true);
+        setTimeout(() => showSelected('font'), 2000);
+      }
+    });
+    fontBtn.addEventListener('mouseenter', () => {
+      showSelected('font', f);
+      control.applySelection(f);
+    });
+    fontBtn.addEventListener('mouseleave', () => {
+      showSelected('font');
+      control.applySelection(getSelected('font'));
+    });
+  });
+
+  // Theme options
+  const themeBtns = document.querySelectorAll('.theme-btn');
+  themeBtns.forEach(themeBtn => {
+    const control = controlObjs['theme'];
+    themeBtn.addEventListener('click', () => {
+      control.applySelection(themeBtn.id);
+      showSelected('theme');
+    });
   });
 
   // Opacity slider
+  const opacitySlider = document.getElementById('opacity-slider');
   opacitySlider.addEventListener('input', () => {
-    setOpacity(Number(opacitySlider.value) / 100);
+    controlObjs['opacity'].applySelection(Number(opacitySlider.value) / 100);
     showSelected('opacity');
   });
 };
@@ -202,7 +230,10 @@ const displayLyrics = async () => {
 
     // On track change
     if (trackName !== previousTrack) {
-      if (getSelected('theme') === 'album') setTheme('album');
+      controlObjs['theme'].setCoverUrl(state['item']['album']['images'][0]['url']);
+      if (getSelected('theme') === 'album') {
+        controlObjs['theme'].applySelection('album');
+      }
       lyrics = await window.spotify.getLyrics(trackId);
       if (lyrics) {
         // If lyrics are unsynced, distribute lyrics equally
@@ -315,8 +346,8 @@ const showInfo = (msg, fade=false) => {
 
 const resetInfo = () => { 
   // Check which editing mode user is in and show currently selected option for that mode
-  for (const c of Object.keys(controls)) {
-    if (isEditing & controls[c].bits) {
+  for (const c of Object.keys(CONTROLS)) {
+    if (CONTROLS[c]['active']) {
       showSelected(c);
       return;
     }
@@ -352,6 +383,13 @@ const enablePlayback = () => {
 
 const disablePlayback = () => playbackBtns.forEach(btn => btn.disabled = true);
 
+const startProgress = () => {
+  cancelAnimationFrame(progressId);
+  progressId = requestAnimationFrame(renderProgress);
+};
+
+const stopProgress = () => cancelAnimationFrame(progressId);
+
 // Sync progress every LYRICS_INTERVAL_MS, otherwise estimate progress
 const syncProgress = (state) => {
   trackProgressMs = state['progress_ms'];
@@ -370,83 +408,9 @@ const renderProgress = () => {
   progressId = requestAnimationFrame(renderProgress);
 };
 
-const startProgress = () => {
-  cancelAnimationFrame(progressId);
-  progressId = requestAnimationFrame(renderProgress);
-};
-
-const stopProgress = () => cancelAnimationFrame(progressId);
-
-const displayControls = (control) => {
-  Object.keys(controls).forEach(c => {
-    controls[c]['element'].style.display = 'none';
-  });
-  controls[control]['element'].style.display = 'flex';
-  if (control === 'playback') {
-    logOutBtn.style.visibility = 'visible';
-  } else {
-    logOutBtn.style.visibility = 'hidden';
-  }
-};
-
-const createFontButtons = () => {
-  const fontBar = controls['font']['element'];
-  Object.keys(FONTS).forEach(f => {
-    const fontBtn = document.createElement('button');
-    fontBtn.textContent = 'Aa';
-    fontBtn.classList.add('font-btn', `font-${f}`);
-    fontBtn.title = FONTS[f]['family'];
-    fontBtn.id = f;
-    if (f === getSelected('font')) {
-      fontBtn.classList.add('underline');  // Indicate currently selected font
-    }
-    fontBtn.addEventListener('click', () => {
-      if (f !== getSelected('font')) {
-        document.getElementById(getSelected('font')).classList.remove('underline');
-        fontBtn.classList.add('underline');
-        setFont(f);
-        showInfo('Font change applied !', true);
-        setTimeout(() => showSelected('font'), 2000);
-      }
-    });
-    fontBtn.addEventListener('mouseenter', () => {
-      showSelected('font', f);
-      setFont(f);
-    });
-    fontBtn.addEventListener('mouseleave', () => {
-      showSelected('font');
-      setFont(getSelected('font'));
-    });
-    fontBar.appendChild(fontBtn);
-  });
-};
-
-const setFont = (fontId) => {
-  // Transform to a CSS-syntax font stack first
-  const fontStack = FONTS[fontId]['family'].map(f => `"${f}"`).join(', ');
-  homePage.style.setProperty('--font', fontStack);
-  setSelected('font', fontId);
-};
-
-const getSelected = (type) => {
-  const defaults = {
-    font: 'epilogue',
-    theme: 'dark',
-    opacity: 0.9,
-  };
-  if (type === 'opacity') {
-    return parseFloat(window.localStorage.getItem(type)) || defaults[type];
-  }
-  return window.localStorage.getItem(type) || defaults[type];
-}
-
-const setSelected = (type, value) => {
-  window.localStorage.setItem(type, value);
-}
-
 const showSelected = (type, selected) => {
   // Do not show selected info if user is not in editing mode
-  if (!(isEditing & controls[type].bits) || type === 'playback') return;
+  if (!(CONTROLS[type]['active']) || type === 'playback') return;
   if (!selected) selected = getSelected(type);
   if (type === 'font') {
     showInfo(`Selected font: ${FONTS[selected]['name']}`);
@@ -455,76 +419,6 @@ const showSelected = (type, selected) => {
   } else if (type === 'opacity') {
     showInfo(`Opacity: ${opacitySlider.value}%`)
   }
-}
-
-const createThemeButtons = () => {
-  const themeBar = controls['theme']['element'];
-  Object.keys(THEMES).forEach(t => {
-    const themeBtn = document.createElement('button');
-
-    const themeIcon = document.createElement('theme-button');
-    themeIcon.setFill(THEMES[t]['background']);
-    themeIcon.setStroke(THEMES[t]['text-primary']);
-    themeBtn.appendChild(themeIcon);
-
-    themeBtn.classList.add('theme-btn');
-    themeBtn.title = THEMES[t].name;
-    themeBtn.id = t;
-
-    themeBtn.addEventListener('click', () => {
-      setTheme(t);
-      showSelected('theme');
-    });
-
-    themeBar.appendChild(themeBtn);
-  });
-}
-
-const setTheme = async (themeId) => {  
-  homePage.style.setProperty('--theme-text-primary', THEMES[themeId]['text-primary']);
-  homePage.style.setProperty('--theme-text-secondary', THEMES[themeId]['text-secondary']);
-
-  // Make the edit theme button match the currently selected theme
-  const editThemeIcon = document.querySelector('theme-button');
-  editThemeIcon.setFill(THEMES[themeId]['background']);
-  editThemeIcon.setStroke(THEMES[themeId]['text-primary']);
-
-  // Apply theme to edit opacity button
-  const editOpacityIcon = document.querySelector('opacity-button');
-  editOpacityIcon.setStroke(THEMES[themeId]['text-primary']);
-
-  // Apply theme to log out button
-  const logOutIcon = document.querySelector('log-out-button');
-  logOutIcon.setFill(THEMES[themeId]['text-secondary']);
-
-  // Album theme sets the background image to the album's cover art
-  if (themeId === 'album') {
-    const response = await invoke(window.api.getPlaybackState(currentToken.access_token));
-    if (!response) return;
-    const state = response['data'];
-    // If there is no song playing, keep the current theme or switch to default theme
-    if (!state) { 
-      setTheme(getSelected('theme') === 'album' ? 'dark' : getSelected('theme'));
-      return;
-    }
-    const imageUrl = state['item']['album']['images'][0]['url'];
-    homePage.style.setProperty('--theme-background-image', `url(${imageUrl})`);
-
-    // Text shadow to make lyrics more readable with the background image
-    document.getElementById('overlay').style.visibility = 'visible';
-    setSelected('theme', themeId);
-    return;
-  }
-  homePage.style.setProperty('--theme-background-image', 'none');
-  homePage.style.setProperty('--theme-background-color', THEMES[themeId].background);
-  document.getElementById('overlay').style.visibility = 'hidden';  // Hide text shadow
-  setSelected('theme', themeId);
-}
-
-const setOpacity = (value) => {
-  document.documentElement.style.setProperty(
-    '--background-opacity', value);
-  setSelected('opacity', value);
 }
 
 const invoke = async (promise) => {
@@ -559,8 +453,8 @@ const cleanUp = () => {
     ...document.querySelectorAll('.edit-btn'),
     ...document.querySelectorAll('.font-btn'),
     ...document.querySelectorAll('.theme-btn'),
-    logOutBtn,
-    opacitySlider,
+    document.getElementById('log-out-btn'),
+    document.getElementById('opacity-slider'),
   ];
   nodes.forEach(node => {
     node.replaceWith(node.cloneNode(true));
