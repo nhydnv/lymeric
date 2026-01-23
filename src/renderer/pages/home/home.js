@@ -1,7 +1,8 @@
-import { currentToken } from '../../authorization.js';
+import { currentToken, startRefreshToken } from '../../authorization.js';
 import { navigateTo } from '../../router.js';
 import { FONTS } from '../../styles/fonts.js';
 import { THEMES } from '../../styles/themes.js';
+import { createTrack, updateLyrics } from './track.js';
 import {
   CONTROLS,
   FontControl,
@@ -13,9 +14,7 @@ import {
 
 let halted = false;
 
-let previousTrack = "";
-let lyrics;
-let startTimes = [];
+let currentTrack = createTrack();
 
 let lyricsIntervalId;
 const LYRICS_INTERVAL_MS = 500;
@@ -24,7 +23,6 @@ const lyricPrev = document.getElementById('lyric-prev');
 const lyricMain = document.getElementById('lyric-main');
 const lyricNext = document.getElementById('lyric-next');
 const infoMsg = document.getElementById('info-msg');
-let isUnsynced = false;
 
 // Playback controls logic
 let isPlaying = false;
@@ -50,6 +48,18 @@ const controlObjs = {
 }
 
 const main = async () => {
+  window.controls.setAlwaysOnTop(true);
+
+  // Wire log out button first so users can log out without waiting for web player to be connected
+  const logOutBtn = document.getElementById('log-out-btn');
+  logOutBtn.addEventListener('click', () => {
+    navigateTo('login');
+    cleanUp();
+  });
+
+  const reloadBtn = document.getElementById('reload-btn');
+  reloadBtn.addEventListener('click', () => window.location.reload() );
+
   Object.keys(controlObjs).forEach(c => {
     controlObjs[c].applySelection(getSelected(c));
     controlObjs[c].createUI();
@@ -59,6 +69,7 @@ const main = async () => {
     fail();
     return;
   }
+  startRefreshToken();
 
   // Disable playback controls if user does not have Spotify Premium
   const sub = await getSubscription();
@@ -130,13 +141,6 @@ const main = async () => {
     await invoke(window.api.seekToPosition(currentToken.access_token, pos));
   });
 
-  // Log out button
-  const logOutBtn = document.getElementById('log-out-btn');
-  logOutBtn.addEventListener('click', () => {
-    navigateTo('login');
-    cleanUp();
-  });
-
   // Edit buttons in the settings bar
   const editBtns = document.querySelectorAll('.edit-btn');
   editBtns.forEach(btn => btn.addEventListener('click', () => {
@@ -204,6 +208,13 @@ const main = async () => {
     controlObjs['opacity'].applySelection(Number(opacitySlider.value) / 100);
     showSelected('opacity');
   });
+
+  // Progress bar
+  const progressHitbox = document.getElementById('progress-hitbox');
+  progressHitbox.addEventListener('click', (event) => {
+    if (!progressHitbox.classList.contains(enabled)) return;
+    const mouseX = event.clientX;  // Mouse position relative to the viewport
+  });
 };
 
 const displayLyrics = async () => {  
@@ -211,11 +222,8 @@ const displayLyrics = async () => {
   if (!response) return;
 
   const state = response['data'];
+  const track = createTrack(state);
   if (state && !state['device']['is_private_session']) {
-    const trackName = state['item']['name'];
-    const trackId = state['item']['id'];
-    const artists = state['item']['artists'].map(artist => artist['name']);
-
     enablePlayback();     // Enable playback buttons
     syncProgress(state);  // Update progress bar
 
@@ -229,39 +237,31 @@ const displayLyrics = async () => {
     playbackModified = false;
 
     // On track change
-    if (trackName !== previousTrack) {
-      controlObjs['theme'].setCoverUrl(state['item']['album']['images'][0]['url']);
+    if (track.id !== currentTrack.id) {      
+      // Set new album cover
+      controlObjs['theme'].setCoverUrl(track.coverUrl);
       if (getSelected('theme') === 'album') {
         controlObjs['theme'].applySelection('album');
       }
-      lyrics = await window.spotify.getLyrics(trackId);
-      if (lyrics) {
-        // If lyrics are unsynced, distribute lyrics equally
-        isUnsynced = (lyrics['lyrics']['syncType'] === 'UNSYNCED');
-        if (isUnsynced) {
-          startTimes = [];
-          const len = lyrics['lyrics']['lines'].length;
-          const step = Math.floor(state['item']['duration_ms'] / len);
-          for (let i = 0; i < len; i++) {
-            startTimes.push(i * step);
-          }
-        } else {
-          startTimes = lyrics['lyrics']['lines'].map(line => line['startTimeMs']);
-        }
-      }
+
+      // Fetch new lyrics
+      const lyrics = await window.spotify.getLyrics(track.id);
+      // Update track's lyrics and compute startTimes
+      updateLyrics(track, lyrics);
       resetInfo();  
       // e.g. "Now playing: Slippery People - Talking Heads";
-      songInfo.textContent = `${trackName} - ${artists.join(', ')}`;
+      songInfo.textContent = `${track.name} - ${track.artists.join(', ')}`;
       clampSongWidth();
-    }
-    previousTrack = trackName;
 
-    if (lyrics) {
-      let lineIndex = findLyricsPosition(startTimes, state['progress_ms']);
-      lyricPrev.textContent = lineIndex > 0 ? lyrics['lyrics']['lines'][lineIndex - 1]['words'] : '';
-      lyricMain.textContent = lineIndex !== -1 ? lyrics['lyrics']['lines'][lineIndex]['words'] : `\u{266A}`;
-      lyricNext.textContent = lineIndex < lyrics['lyrics']['lines'].length - 1 ? 
-                              lyrics['lyrics']['lines'][lineIndex + 1]['words'] : ``;
+      currentTrack = track;
+    }
+
+    if (currentTrack.lyrics) {
+      let lineIndex = findLyricsPosition(currentTrack.startTimes, state['progress_ms']);
+      lyricPrev.textContent = lineIndex > 0 ? currentTrack.lyrics['lyrics']['lines'][lineIndex - 1]['words'] : '';
+      lyricMain.textContent = lineIndex !== -1 ? currentTrack.lyrics['lyrics']['lines'][lineIndex]['words'] : `\u{266A}`;
+      lyricNext.textContent = lineIndex < currentTrack.lyrics['lyrics']['lines'].length - 1 ? 
+                              currentTrack.lyrics['lyrics']['lines'][lineIndex + 1]['words'] : ``;
       clampLyricHeight();
     } else { 
       // No lyrics available
@@ -272,8 +272,11 @@ const displayLyrics = async () => {
   } else {
     disablePlayback();
     // 204 No Content: No song playing or try relaunching Spotify app
+    currentTrack = createTrack();
     songInfo.textContent = '-';
     clampSongWidth();
+    
+    // Lyrics
     lyricPrev.textContent = '';
     if (state) lyricMain.textContent = 'Disable private listening and relaunch the app to see lyrics.';
     else lyricMain.textContent = '\u{266A} Start playing something \u{266A}';
@@ -352,7 +355,7 @@ const resetInfo = () => {
       return;
     }
   }
-  showInfo(isUnsynced ? "Lyrics aren't synced to the track yet." : "");
+  showInfo(currentTrack.isUnsynced ? "Lyrics aren't synced to the track yet." : "");
 }
 
 // Get user's Spotify subscription
@@ -379,9 +382,13 @@ const onPlaybackChange = (state) => {
 // Playback buttons enable/disable
 const enablePlayback = () => { 
   if (hasPremium) playbackBtns.forEach(btn => btn.disabled = false);
+  setProgressHitbox(true);
 };
 
-const disablePlayback = () => playbackBtns.forEach(btn => btn.disabled = true);
+const disablePlayback = () => { 
+  playbackBtns.forEach(btn => btn.disabled = true);
+  setProgressHitbox(false);  // Prevent users from skipping to another position
+}
 
 const startProgress = () => {
   cancelAnimationFrame(progressId);
@@ -408,6 +415,11 @@ const renderProgress = () => {
   progressId = requestAnimationFrame(renderProgress);
 };
 
+const setProgressHitbox = (enabled) => {
+  if (enabled) { document.getElementById('progress-hitbox').classList.add('enabled'); }
+  else { document.getElementById('progress-hitbox').classList.remove('enabled') };
+}
+
 const showSelected = (type, selected) => {
   // Do not show selected info if user is not in editing mode
   if (!(CONTROLS[type]['active']) || type === 'playback') return;
@@ -417,7 +429,7 @@ const showSelected = (type, selected) => {
   } else if (type === 'theme') {
     showInfo(`Selected theme: ${THEMES[selected]['name']}`);
   } else if (type === 'opacity') {
-    showInfo(`Opacity: ${opacitySlider.value}%`)
+    showInfo(`Opacity: ${Math.round(selected * 100)}%`)
   }
 }
 

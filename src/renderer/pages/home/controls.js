@@ -43,11 +43,11 @@ class Control {
     CONTROLS[c]['element'].style.display = 'none';
     });
     CONTROLS[this.type]['element'].style.display = 'flex';
-    const logOutBtn = document.getElementById('log-out-btn');
+    const actionBar = document.getElementById('action-bar');
     if (this.type === 'playback') {
-      logOutBtn.style.visibility = 'visible';
+      actionBar.style.visibility = 'visible';
     } else {
-      logOutBtn.style.visibility = 'hidden';
+      actionBar.style.visibility = 'hidden';
     }
   }
 }
@@ -126,6 +126,7 @@ class ThemeControl extends Control {
       // If there is no song playing, keep the current theme or switch to default theme
       if (this.#coverUrl === '') { 
         this.applySelection(getSelected('theme') === 'album' ? 'dark' : getSelected('theme'));
+        setSelected('theme', 'album');
         return;
       }
       homePage.style.setProperty('--theme-background-image', `url(${this.#coverUrl})`);

@@ -212,20 +212,29 @@ title-bar {
   font-size: 0.6em;
 }
 
-#settings-bar button:hover, .theme-btn:hover, #log-out-btn:hover {
+#settings-bar button:hover, .theme-btn:hover, #action-bar button:hover {
   opacity: 0.6;
 }
 
-#log-out-btn {
+#action-bar {
   position: absolute;
   bottom: 0;
   right: 0;
-  border: 0;
-  background: transparent;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  margin: 3px 5px;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 2px;
+  padding: 3px 5px;
+  button {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    width: 20px;
+    height: 20px;
+    color: var(--theme-text-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 #lyrics {
@@ -297,7 +306,7 @@ title-bar {
 
 /* Make sure the following two selectors have the same specificity */
 #home-page #info-msg {
-  font-size: 0.4em;
+  font-size: 0.45em;
   text-align: center;
   margin-top: 2px;
   opacity: 1;
@@ -404,9 +413,30 @@ title-bar {
   --btn-hover-color: var(--theme-text-primary);
 }
 
+#home-page #progress-hitbox {
+  position: relative;
+  height: 4px;
+  app-region: no-drag;
+  #progress-track, #progress-bar {
+    position: absolute;
+    bottom: 0;
+    height: 2px;
+  }
+}
+
+#home-page #progress-hitbox.enabled:hover {
+  cursor: pointer;
+  #progress-track {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+#home-page #progress-track {
+  width: 100%;
+}
+
 #home-page #progress-bar {
   width: 0%;
-  height: 2px;
   background-color: var(--theme-text-primary);
 }
 

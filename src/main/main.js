@@ -26,7 +26,7 @@ const createWindow = () => {
     titleBarStyle: 'hidden',  // Remove the default title bar
     resizable: false,
     transparent: true,
-    alwaysOnTop: true,
+    alwaysOnTop: false,
     webPreferences: {
       contextIsolation: true,
       preload: path.join(__dirname, '../preload/preload.js'),
@@ -42,16 +42,12 @@ const createWindow = () => {
   });
 }
 
-const closeWindow = (event) => {
-  if (mainWindow) mainWindow.close();
-}
+const closeWindow = (_event) => mainWindow?.close();
 
-const minimizeWindow = (event) => {
-  if (mainWindow) mainWindow.minimize();
-}
+const minimizeWindow = (_event) => mainWindow?.minimize();
 
 // Create a server to redirect to after user authorised with Spotify
-const createAuthServer = (event) => {
+const createAuthServer = (_event) => {
   const server = http.createServer((req, res) => {
     const url = new URL(req.url, redirectUri);
 
@@ -69,10 +65,14 @@ const createAuthServer = (event) => {
   });
 }
 
-const loadPage = async (event, relativePath) => {
+const loadPage = async (_event, relativePath) => {
   const fullPath = path.join(__dirname, "../renderer", relativePath);
   return readFile(fullPath, "utf8");
 }
+
+const setAlwaysOnTop = (_event, enabled) => {
+  mainWindow?.setAlwaysOnTop(Boolean(enabled));
+};
 
 // Create the main window
 app.whenReady().then(() => {
@@ -80,6 +80,7 @@ app.whenReady().then(() => {
   // Window controls
   ipcMain.on('close-window', closeWindow);
   ipcMain.on('minimize-window', minimizeWindow);
+  ipcMain.on('always-on-top', setAlwaysOnTop);
 
   // Spotify OAuth
   ipcMain.on('close-auth-window', closeAuthWindow);

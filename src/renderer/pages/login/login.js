@@ -2,6 +2,7 @@ import { authorize } from '../../authorization.js';
 import { navigateTo } from '../../router.js';
 
 export const init = () => {
+  window.controls.setAlwaysOnTop(false);
   const btn = document.getElementById("login-btn");
 
   // Remove previous listeners so there is only one listener on the button

@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('spotify', {
 contextBridge.exposeInMainWorld('controls', {
   closeWindow: () => ipcRenderer.send('close-window'),
   minimizeWindow: () => ipcRenderer.send('minimize-window'),
+  setAlwaysOnTop: (enabled) => ipcRenderer.send('always-on-top', enabled),
 });
 
 contextBridge.exposeInMainWorld('pages', {

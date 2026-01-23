@@ -11,9 +11,12 @@
       <opacity-button></opacity-button>
     </button>
   </div>
-  <button title="Log out" id="log-out-btn">
-    <log-out-button></log-out-button>
-  </button>
+  <div id="action-bar">
+    <button title="Reload" id="reload-btn">&#x27F3;</button>
+    <button title="Log out" id="log-out-btn">
+      <log-out-button></log-out-button>
+    </button>
+  </div>
   <div id="now-playing">
     <p>
       <span>Now playing:&nbsp;</span>
@@ -69,6 +72,9 @@
         </svg>
       </button>
     </div>
-    <div id="progress-bar"></div>
+    <div id="progress-hitbox">
+      <div id="progress-track"></div>
+      <div id="progress-bar"></div>
+    </div>
   </div>
 </div>
