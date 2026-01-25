@@ -14,7 +14,7 @@ contextBridge.exposeInMainWorld('controls', {
   closeWindow: () => ipcRenderer.send('close-window'),
   minimizeWindow: () => ipcRenderer.send('minimize-window'),
   setAlwaysOnTop: (enabled) => ipcRenderer.send('always-on-top', enabled),
-  moveToBottomRight: () => ipcRenderer.send('move-to-bottom-right'),
+  moveToCorner: (corner) => ipcRenderer.send('move-to-corner', corner),
 });
 
 contextBridge.exposeInMainWorld('pages', {

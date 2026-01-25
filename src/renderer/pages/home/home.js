@@ -59,9 +59,6 @@ const main = async () => {
   const reloadBtn = document.getElementById('reload-btn');
   reloadBtn.addEventListener('click', () => window.location.reload());
 
-  const cornerBtn = document.getElementById('corner-btn');
-  cornerBtn.addEventListener('click', () => window.controls.moveToBottomRight());
-
   Object.keys(controlObjs).forEach(c => {
     controlObjs[c].applySelection(getSelected(c));
     controlObjs[c].createUI();

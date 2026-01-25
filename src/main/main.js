@@ -74,13 +74,22 @@ const setAlwaysOnTop = (_event, enabled) => {
   mainWindow?.setAlwaysOnTop(Boolean(enabled));
 };
 
-const moveToBottomRight = (_event) => {
+const moveToCorner = (_event, corner) => {
   if (!mainWindow) return;
   const display = screen.getDisplayMatching(mainWindow.getBounds());
   const { width, height, x, y } = display.workArea;
 
-  const newX = x + width - MAIN_WINDOW_WIDTH;
-  const newY = y + height - MAIN_WINDOW_HEIGHT;
+  let newX = x;
+  let newY = y;    
+
+  if (corner === 'top-right') {
+    newX = x + width - MAIN_WINDOW_WIDTH;
+  } else if (corner === 'bottom-right') {
+    newX = x + width - MAIN_WINDOW_WIDTH;
+    newY = y + height - MAIN_WINDOW_HEIGHT;
+  } else if (corner === 'bottom-left') {
+    newY = y + height - MAIN_WINDOW_HEIGHT;
+  }
 
   mainWindow.setPosition(newX, newY);
 }
@@ -92,7 +101,7 @@ app.whenReady().then(() => {
   ipcMain.on('close-window', closeWindow);
   ipcMain.on('minimize-window', minimizeWindow);
   ipcMain.on('always-on-top', setAlwaysOnTop);
-  ipcMain.on('move-to-bottom-right', moveToBottomRight);
+  ipcMain.on('move-to-corner', moveToCorner);
 
   // Spotify OAuth
   ipcMain.on('close-auth-window', closeAuthWindow);

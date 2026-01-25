@@ -15,7 +15,6 @@ const openWebPlayer = async (event) => {
   const cookies = await getCookies();
 
   const browser = await puppeteer.launch({
-    headless: false,
     executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
   });
   [page] = await browser.pages();

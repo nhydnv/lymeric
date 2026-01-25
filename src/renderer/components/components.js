@@ -201,6 +201,45 @@ class ReloadButton extends HTMLElement {
   }
 }
 
+class CornerButton extends HTMLElement {
+  #state = 0;
+  #directions = [
+    {
+      name: 'bottom-right',
+      arrow: '↘',
+    },
+    {
+      name: 'bottom-left',
+      arrow: '↙',
+    },
+    {
+      name: 'top-left',
+      arrow: '↖',
+    },
+    {
+      name: 'top-right',
+      arrow: '↗',
+    },
+  ];
+
+  constructor() {
+    super();
+  }
+
+  connectedCallback() {
+    const btn = document.createElement('button');
+    btn.title = 'Move to corner';
+    btn.id = 'corner-btn';
+    btn.innerHTML = this.#directions[this.#state].arrow;
+    btn.addEventListener('click', () => {
+      window.controls.moveToCorner(this.#directions[this.#state].name);
+      this.#state = (this.#state + 1) % 4;
+      btn.innerHTML = this.#directions[this.#state].arrow;
+    });
+    this.appendChild(btn);
+  }
+}
+
 customElements.define("title-bar", TitleBar);
 customElements.define("play-button", PlayButton);
 customElements.define("pause-button", PauseButton);
@@ -208,3 +247,4 @@ customElements.define("theme-button", ThemeButton);
 customElements.define("opacity-button", OpacityButton);
 customElements.define("log-out-button", LogOutButton);
 customElements.define("reload-button", ReloadButton);
+customElements.define("corner-button", CornerButton);
