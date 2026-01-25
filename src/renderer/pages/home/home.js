@@ -56,6 +56,10 @@ const main = async () => {
     cleanUp();
   });
 
+  // Reload button
+  const reloadBtn = document.getElementById('reload-btn');
+  reloadBtn.addEventListener('click', () => window.location.reload());
+
   Object.keys(controlObjs).forEach(c => {
     controlObjs[c].applySelection(getSelected(c));
     controlObjs[c].createUI();
@@ -158,6 +162,8 @@ const main = async () => {
       controlObjs[controlType].display();
       showSelected(controlType);
     } else {
+      // If the current controlType is not active => Exiting out of editing mode => Display playback
+      CONTROLS['playback']['active'] = true;
       controlObjs['playback'].display();
       resetInfo();
     }
@@ -256,6 +262,7 @@ const displayLyrics = async () => {
       const lyrics = await window.spotify.getLyrics(track.id);
       // Update track's lyrics and compute startTimes
       updateLyrics(track, lyrics);
+      console.log(track);
       resetInfo();  
       // e.g. "Now playing: Slippery People - Talking Heads";
       songInfo.textContent = `${track.name} - ${track.artists.join(', ')}`;
@@ -356,6 +363,8 @@ const showInfo = (msg, fade=false) => {
 }
 
 const resetInfo = () => { 
+  showInfo(currentTrack.isUnsynced ? "Lyrics aren't synced to the track yet." : "");
+
   // Check which editing mode user is in and show currently selected option for that mode
   for (const c of Object.keys(CONTROLS)) {
     if (CONTROLS[c]['active']) {
@@ -363,7 +372,6 @@ const resetInfo = () => {
       return;
     }
   }
-  showInfo(currentTrack.isUnsynced ? "Lyrics aren't synced to the track yet." : "");
 }
 
 // Get user's Spotify subscription
