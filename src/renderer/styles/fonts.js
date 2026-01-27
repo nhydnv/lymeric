@@ -43,14 +43,14 @@ export const FONTS = {
   },
   'lora': {
     name: "Lora",
-    family: ["Lora", "Iowan Old Style", "Apple Garamond", "Baskerville", "Times New Roman", "Droid Serif", "Times", "Source Serif Pro", "serif", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"],
+    family: ["Lora", "Iowan Old Style", "Apple Garamond", "Baskerville", "Times New Roman", "Droid Serif", "Times", "Source Serif Pro", "serif"],
     file: "Lora.ttf",
     weight: '400 700',
     style: 'normal',
   },
   'newsreader': {
     name: "Newsreader",
-    family: ["Newsreader","Iowan Old Style", "Apple Garamond", "Baskerville", "Times New Roman", "Droid Serif", "Times", "Source Serif Pro", "serif", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"],
+    family: ["Newsreader","Iowan Old Style", "Apple Garamond", "Baskerville", "Times New Roman", "Droid Serif", "Times", "Source Serif Pro", "serif"],
     file: "Newsreader.ttf",
     weight: '200 800',
     style: 'normal',

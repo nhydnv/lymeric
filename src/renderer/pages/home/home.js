@@ -186,11 +186,11 @@ const main = async () => {
     });
     fontBtn.addEventListener('mouseenter', () => {
       showSelected('font', f);
-      control.applySelection(f);
+      control.applySelection(f, false);
     });
     fontBtn.addEventListener('mouseleave', () => {
       showSelected('font');
-      control.applySelection(getSelected('font'));
+      control.applySelection(getSelected('font'), false);
     });
   });
 
@@ -397,8 +397,10 @@ const onPlaybackChange = (state) => {
 
 // Playback buttons enable/disable
 const enablePlayback = () => { 
-  if (hasPremium) playbackBtns.forEach(btn => btn.disabled = false);
-  setProgressHitbox(true);
+  if (hasPremium) {
+    playbackBtns.forEach(btn => btn.disabled = false);
+    setProgressHitbox(true);
+  }
 };
 
 const disablePlayback = () => { 

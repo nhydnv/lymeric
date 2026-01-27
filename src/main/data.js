@@ -15,6 +15,7 @@ const openWebPlayer = async (event) => {
   const cookies = await getCookies();
 
   const browser = await puppeteer.launch({
+    headless: false,
     executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
   });
   [page] = await browser.pages();
@@ -127,8 +128,8 @@ const waitForLyrics = (trackId, timeout=3000) => {
 };
 
 /* ---------- Get user/track info ---------- */
-const getPlaybackState = async (event, token) => requestData(token, "/me/player");
-const getCurrentUser = async (event, token) => requestData(token, "/me");
+const getPlaybackState = async (_event, token) => requestData(token, "/me/player");
+const getCurrentUser = async (_event, token) => requestData(token, "/me");
 
 const requestData = async (token, path) => {
   if (safeStorage.isEncryptionAvailable()) {
@@ -164,11 +165,11 @@ const requestData = async (token, path) => {
 }
 
 /* ---------- Play/pause/skip to next/skip to previous commands  ---------- */
-const startPlayback = async (event, token) => modifyPlayback(token, 'PUT', '/me/player/play');
-const pausePlayback = async (event, token) => modifyPlayback(token, 'PUT', '/me/player/pause');
-const skipToNext = async (event, token) => modifyPlayback(token, 'POST', '/me/player/next');
-const skipToPrevious = async (event, token) => modifyPlayback(token, 'POST', '/me/player/previous');
-const seekToPosition = async (event, token, position_ms) => {
+const startPlayback = async (_event, token) => modifyPlayback(token, 'PUT', '/me/player/play');
+const pausePlayback = async (_event, token) => modifyPlayback(token, 'PUT', '/me/player/pause');
+const skipToNext = async (_event, token) => modifyPlayback(token, 'POST', '/me/player/next');
+const skipToPrevious = async (_event, token) => modifyPlayback(token, 'POST', '/me/player/previous');
+const seekToPosition = async (_event, token, position_ms) => {
   return modifyPlayback(token, 'PUT', `/me/player/seek?position_ms=${position_ms}`);
 };
 

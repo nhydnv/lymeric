@@ -35,7 +35,7 @@ class Control {
   createUI() {
     throw new Error("createUI() must be implemented");
   }
-  async applySelection(id) {
+  async applySelection(id, recordChange) {
     throw new Error("applySelection() must be implemented");
   }
   display() {
@@ -71,11 +71,11 @@ class FontControl extends Control {
     });
   }
 
-  async applySelection(fontId) {
+  async applySelection(fontId, recordChange=true) {
     // Transform to a CSS-syntax font stack first
     const fontStack = FONTS[fontId]['family'].map(f => `"${f}"`).join(', ');
     homePage.style.setProperty('--font', fontStack);
-    setSelected('font', fontId);
+    if (recordChange) setSelected('font', fontId);
   }
 }
 
@@ -104,7 +104,7 @@ class ThemeControl extends Control {
     });
   }
 
-  async applySelection(themeId) {
+  async applySelection(themeId, recordChange=true) {
     homePage.style.setProperty('--theme-text-primary', THEMES[themeId]['text-primary']);
     homePage.style.setProperty('--theme-text-secondary', THEMES[themeId]['text-secondary']);
 
@@ -148,7 +148,7 @@ class OpacityControl extends Control {
     return; 
   }
 
-  applySelection(value) {
+  applySelection(value, recordChange=true) {
     document.documentElement.style.setProperty(
       '--background-opacity', value);
     setSelected('opacity', value);
@@ -162,7 +162,7 @@ class PlaybackControl extends Control {
   createUI() { 
     document.getElementById('opacity-slider').value = getSelected('opacity') * 100;
   }
-  applySelection(id) { return; }
+  applySelection(id, recordChange) { return; }
 }
 
 const getSelected = (type) => {
