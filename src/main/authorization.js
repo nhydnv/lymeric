@@ -38,11 +38,11 @@ const openAuthWindow = (url) => {
   });
 }
 
-const closeAuthWindow = event => { 
+const closeAuthWindow = _event => { 
   if (authWindow) authWindow.close(); 
 }
 
-const getToken = async (event, code, codeVerifier) => {
+const getToken = async (_event, code, codeVerifier) => {
   const url = tokenEndpoint;
   const payload = {
     method: 'POST',
@@ -63,7 +63,7 @@ const getToken = async (event, code, codeVerifier) => {
 }
 
 // Refresh token once the current access token expires
-const refreshToken = async (event, refreshToken) => {
+const refreshToken = async (_event, refreshToken) => {
   console.log('Refreshing token...');
   refreshToken = safeStorage.decryptString(Buffer.from(refreshToken, 'base64'));
   const response = await fetch(tokenEndpoint, {
@@ -89,7 +89,7 @@ const encryptToken = token => {
   return token;
 }
 
-const redirectToSpotifyAuthorize = async (event, codeChallenge, state) =>  {
+const redirectToSpotifyAuthorize = async (_event, codeChallenge, state) =>  {
   const authUrl = new URL(authorizationEndpoint);
 
   const params =  {

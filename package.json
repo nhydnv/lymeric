@@ -25,6 +25,7 @@
       "target": [
         "portable"
       ],
+      "icon": "src/assets/icons/app-icon.ico",
       "signAndEditExecutable": false
     }
   }
