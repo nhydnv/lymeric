@@ -5,6 +5,7 @@ const { getCookies } = require('./authorization');
 
 const api = "https://api.spotify.com/v1";
 let page;
+let browser;
 let lyricsCache = new Map();
 
 // Load mutex to make sure that only 1 web player boot is happening at all times
@@ -19,7 +20,7 @@ const openWebPlayer = async (_event) => {
     try {
       const cookies = await getCookies();
 
-      const browser = await puppeteer.launch({
+      browser = await puppeteer.launch({
         executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
       });
       [page] = await browser.pages();
@@ -83,6 +84,8 @@ const openWebPlayer = async (_event) => {
 const restartWebPlayer = async () => {
   if (isRestarting) return;
   isRestarting = true;
+
+  console.log('Restarting web player...');  // Debug
 
   try {
     if (page && !page.isClosed()) {
